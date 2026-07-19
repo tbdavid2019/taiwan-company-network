@@ -2,6 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import {
   Building2,
+  Clock3,
   ChevronRight,
   Landmark,
   MapPin,
@@ -27,7 +28,7 @@ function formatCapital(value) {
 }
 
 function Sidebar({ routes = [], isOpen, onClose }) {
-  const { companyDetails, selectedCompany } = useCompany();
+  const { companyDetails, recentCompanies, selectedCompany } = useCompany();
 
   return (
     <>
@@ -130,6 +131,29 @@ function Sidebar({ routes = [], isOpen, onClose }) {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          )}
+
+          {recentCompanies.length > 0 && (
+            <div className="mt-8">
+              <Separator className="mb-5 bg-white/10" />
+              <div className="mb-2 flex items-center gap-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <Clock3 className="size-3" /> Recent
+              </div>
+              <div className="space-y-1">
+                {recentCompanies.map((entry) => (
+                  <NavLink
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-400 transition hover:bg-white/[0.06] hover:text-white"
+                    key={entry.name}
+                    onClick={onClose}
+                    to={`/graph?company=${encodeURIComponent(entry.name)}`}
+                  >
+                    <Building2 className="size-3.5 shrink-0 text-slate-500" />
+                    <span className="min-w-0 flex-1 truncate">{entry.name}</span>
+                    {entry.id && <span className="font-mono text-[10px] text-slate-600">{entry.id}</span>}
+                  </NavLink>
+                ))}
+              </div>
             </div>
           )}
         </div>

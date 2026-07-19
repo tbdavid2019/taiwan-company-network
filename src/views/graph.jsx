@@ -50,7 +50,13 @@ function makeGraphData(network, root, mode, details, expandedNodes) {
     nodeIds.add(id);
     nodes.push({
       id,
-      data: { name: id, kind: details[id] ? "company" : "entity", isRoot: id === root },
+      data: {
+        name: id,
+        kind: details[id] ? "company" : "entity",
+        isRoot: id === root,
+        upstreamCount: network[id]?.in?.length || 0,
+        downstreamCount: network[id]?.out?.length || 0,
+      },
     });
   };
 
@@ -152,8 +158,8 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
         const dx = target.x - source.x;
         const dy = target.y - source.y;
         const distance = Math.hypot(dx, dy) || 1;
-        const sourceRadius = nodesById.get(edge.source)?.data?.isRoot ? 19 : 15;
-        const targetRadius = nodesById.get(edge.target)?.data?.isRoot ? 25 : 21;
+        const sourceRadius = nodesById.get(edge.source)?.data?.isRoot ? 24 : 18;
+        const targetRadius = nodesById.get(edge.target)?.data?.isRoot ? 30 : 24;
         return <line key={edge.id} markerEnd="url(#relationship-arrow)" stroke="#94a3b8" strokeWidth="2" x1={source.x + (dx / distance) * sourceRadius} x2={target.x - (dx / distance) * targetRadius} y1={source.y + (dy / distance) * sourceRadius} y2={target.y - (dy / distance) * targetRadius} />;
       })}
       {data.nodes.map((node) => {
@@ -162,6 +168,10 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
         const isCompany = node.data?.kind === "company";
         const fill = isRoot ? "#2563eb" : isCompany ? "#0f766e" : "#94a3b8";
         const label = String(node.data?.name || node.id);
+        const upstreamCount = node.data?.upstreamCount || 0;
+        const downstreamCount = node.data?.downstreamCount || 0;
+        const nodeRadius = isRoot ? 22 : 16;
+        const badgeY = position.y - nodeRadius - 17;
         return (
           <g
             className="cursor-pointer"
@@ -170,9 +180,17 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
             onMouseEnter={() => onNodeHover(node.id)}
             onMouseLeave={() => onNodeHover("")}
           >
-            {isRoot && <circle cx={position.x} cy={position.y} fill="#bfdbfe" r="27" />}
-            <circle cx={position.x} cy={position.y} fill={fill} r={isRoot ? 17 : 13} stroke="#fff" strokeWidth="3" />
-            <text fill={isRoot ? "#1d4ed8" : "#334155"} fontFamily="Geist Variable, sans-serif" fontSize={isRoot ? 16 : 12} fontWeight={isRoot ? 600 : 500} textAnchor="middle" x={position.x} y={position.y + (isRoot ? 43 : 34)}>{label}</text>
+            {isRoot && <circle cx={position.x} cy={position.y} fill="#bfdbfe" r="34" />}
+            <circle cx={position.x} cy={position.y} fill={fill} r={nodeRadius} stroke="#fff" strokeWidth="3" />
+            <g transform={`translate(${position.x - 43} ${badgeY})`}>
+              <rect fill="#eff6ff" height="16" rx="8" stroke="#bfdbfe" width="40" />
+              <text fill="#1d4ed8" fontFamily="Geist Variable, sans-serif" fontSize="10" fontWeight="600" textAnchor="middle" x="20" y="11">上 {upstreamCount}</text>
+            </g>
+            <g transform={`translate(${position.x + 3} ${badgeY})`}>
+              <rect fill="#ecfdf5" height="16" rx="8" stroke="#99f6e4" width="40" />
+              <text fill="#0f766e" fontFamily="Geist Variable, sans-serif" fontSize="10" fontWeight="600" textAnchor="middle" x="20" y="11">下 {downstreamCount}</text>
+            </g>
+            <text fill={isRoot ? "#1d4ed8" : "#334155"} fontFamily="Geist Variable, sans-serif" fontSize={isRoot ? 16 : 12} fontWeight={isRoot ? 600 : 500} textAnchor="middle" x={position.x} y={position.y + (isRoot ? 48 : 38)}>{label}</text>
           </g>
         );
       })}
@@ -185,7 +203,7 @@ function NetworkGraph() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { setCompanyDetails, setSelectedCompany } = useCompany();
+  const { rememberCompany, setCompanyDetails, setSelectedCompany } = useCompany();
   const graphContainerRef = useRef(null);
   const graphRef = useRef(null);
   const [network, setNetwork] = useState({});
@@ -228,7 +246,8 @@ function NetworkGraph() {
   useEffect(() => {
     setSelectedCompany(company || null);
     setCompanyDetails(company ? details[company] || null : null);
-  }, [company, details, setCompanyDetails, setSelectedCompany]);
+    if (company) rememberCompany(company, details[company] || null);
+  }, [company, details, rememberCompany, setCompanyDetails, setSelectedCompany]);
 
   const graphData = useMemo(
     () => makeGraphData(network, company, mode, details, expandedNodes),
@@ -270,12 +289,12 @@ function NetworkGraph() {
           const isRoot = data.isRoot;
           const isCompany = data.kind === "company";
           return {
-            size: isRoot ? 30 : 20,
+            size: isRoot ? 38 : 28,
             fill: isRoot ? "#2563eb" : isCompany ? "#0f766e" : "#94a3b8",
             stroke: isRoot ? "#bfdbfe" : "#f8fafc",
-            lineWidth: isRoot ? 7 : 2,
+            lineWidth: isRoot ? 8 : 3,
             label: true,
-            labelText: String(data.name || datum.id),
+            labelText: `${String(data.name || datum.id)}\n上 ${data.upstreamCount || 0} · 下 ${data.downstreamCount || 0}`,
             labelFill: isRoot ? "#1d4ed8" : "#334155",
             labelFontSize: isRoot ? 14 : 12,
             labelFontWeight: isRoot ? 600 : 400,
@@ -335,7 +354,7 @@ function NetworkGraph() {
 
   return (
     <div className="fade-in">
-      <Header actions={<Button onClick={() => navigate("/index")} variant="outline"><ArrowLeft />Back to index</Button>} description="Start with all direct relationships, then click a node to expand the next layer in place." eyebrow="Network explorer" title={company || "Relationship graph"} />
+      <Header actions={<Button onClick={() => navigate("/index")} variant="outline"><ArrowLeft />Back to index</Button>} breadcrumbs={[{ label: "Companies", to: "/index" }, { label: "Relationship graph" }, ...(company ? [{ label: company }] : [])]} description="Start with all direct relationships, then click a node to expand the next layer in place." eyebrow="Network explorer" title={company || "Relationship graph"} />
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <Card className="min-w-0 overflow-hidden">
           <CardHeader className="border-b border-border/70 bg-muted/20 px-5 py-4 sm:px-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><CardTitle className="flex items-center gap-2 text-base"><Network className="size-4 text-primary" />{currentView?.label}</CardTitle><p className="mt-1 text-xs text-muted-foreground">{graphData.nodes.length} nodes · {graphData.edges.length} links</p></div><Badge variant="outline">{currentView?.hint}</Badge></div></CardHeader>
@@ -360,7 +379,7 @@ function NetworkGraph() {
               </div>
             )}
             {hoveredNode && <div className="pointer-events-none absolute right-4 top-4 z-10 w-[min(22rem,calc(100%-2rem))] rounded-xl border border-border/80 bg-background/95 p-4 shadow-xl backdrop-blur"><EntityDetails details={details} name={hoveredNode} /></div>}
-            <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 rounded-lg border border-border/70 bg-background/90 px-3 py-2 text-[11px] text-muted-foreground shadow-sm backdrop-blur"><span className="size-2 rounded-full bg-blue-600" /> Focus <span className="size-2 rounded-full bg-teal-700" /> Company <span className="size-2 rounded-full bg-slate-400" /> Entity <span>· 點節點展開／收合</span> {expandedNodes.size > 0 && <span>· {expandedNodes.size} expanded</span>}</div>
+            <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 rounded-lg border border-border/70 bg-background/90 px-3 py-2 text-[11px] text-muted-foreground shadow-sm backdrop-blur"><span className="size-2 rounded-full bg-blue-600" /> Focus <span className="size-2 rounded-full bg-teal-700" /> Company <span className="size-2 rounded-full bg-slate-400" /> Entity <span>· 上／下數＝可展開關係</span> {expandedNodes.size > 0 && <span>· {expandedNodes.size} expanded</span>}</div>
             <div className="absolute bottom-4 right-4 z-10 flex gap-1 rounded-lg border border-border/70 bg-background/90 p-1 shadow-sm backdrop-blur"><Button aria-label="Zoom out" onClick={() => zoom(0.8)} size="icon" variant="ghost"><Minus /></Button><Button aria-label="Reset graph expansion" onClick={resetGraph} size="icon" variant="ghost"><RefreshCw /></Button><Button aria-label="Zoom in" onClick={() => zoom(1.2)} size="icon" variant="ghost"><Plus /></Button></div>
           </div></CardContent>
         </Card>

@@ -32,7 +32,7 @@ function NetworkStat({ icon: Icon, label, value }) {
   );
 }
 
-function CompanyCard({ aliases, name, connected, hasCompanyRecord, onClick }) {
+function CompanyCard({ aliases, listing, name, connected, hasCompanyRecord, onClick }) {
   return (
     <button
       className="group flex w-full items-center justify-between gap-4 rounded-xl border border-border/70 bg-card px-4 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -40,7 +40,10 @@ function CompanyCard({ aliases, name, connected, hasCompanyRecord, onClick }) {
       type="button"
     >
       <span className="min-w-0">
-        <span className="block truncate text-sm font-medium text-foreground">{name || "Unnamed entity"}</span>
+        <span className="flex items-center gap-2">
+          <span className="truncate text-sm font-medium text-foreground">{name || "Unnamed entity"}</span>
+          {listing && <Badge className="shrink-0 font-mono text-[10px]" variant="secondary">{listing.code}</Badge>}
+        </span>
         <span className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
           <span className={`size-1.5 rounded-full ${connected ? "bg-emerald-500" : "bg-slate-300"}`} />
           {connected ? "Connected entity" : hasCompanyRecord ? "Company record" : "Indexed entity"}
@@ -130,6 +133,22 @@ function CompanyList() {
     return index;
   }, [aliases]);
 
+  const listingsByName = useMemo(() => {
+    const index = new Map();
+    Object.values(aliases).forEach((records) => {
+      records.forEach(({ code, market, name }) => {
+        if (!code || !name) return;
+        const current = index.get(name) || [];
+        if (!current.some((record) => record.code === code && record.market === market)) {
+          current.push({ code, market });
+        }
+        index.set(name, current);
+      });
+    });
+    index.forEach((records) => records.sort((left, right) => left.code.localeCompare(right.code, "en", { numeric: true })));
+    return index;
+  }, [aliases]);
+
   const filteredEntities = useMemo(() => {
     const terms = deferredQuery
       .trim()
@@ -137,15 +156,21 @@ function CompanyList() {
       .split(/\s+/)
       .filter(Boolean);
 
-    if (!terms.length) return entities;
-    return entities.filter((name) => {
+    const matches = !terms.length ? [...entities] : entities.filter((name) => {
       const normalized = name.toLocaleLowerCase();
       const companyAliases = aliasesByName.get(name) || [];
       return terms.every((term) => (
         normalized.includes(term) || companyAliases.some((alias) => alias.toLocaleLowerCase().includes(term))
       ));
     });
-  }, [aliasesByName, deferredQuery, entities]);
+    return matches.sort((left, right) => {
+      const leftListing = listingsByName.get(left)?.[0];
+      const rightListing = listingsByName.get(right)?.[0];
+      if (Boolean(leftListing) !== Boolean(rightListing)) return leftListing ? -1 : 1;
+      if (leftListing && rightListing) return leftListing.code.localeCompare(rightListing.code, "en", { numeric: true });
+      return left.localeCompare(right, "zh-Hant");
+    });
+  }, [aliasesByName, deferredQuery, entities, listingsByName]);
 
   const openEntity = (name) => {
     setSelectedCompany(name);
@@ -244,6 +269,7 @@ function CompanyList() {
                       connected={connected}
                       hasCompanyRecord={Boolean(details[name])}
                       key={name}
+                      listing={listingsByName.get(name)?.[0]}
                       name={name}
                       onClick={() => openEntity(name)}
                     />

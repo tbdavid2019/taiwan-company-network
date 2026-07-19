@@ -8,6 +8,8 @@ All notable changes to this project are documented in this file.
 - Connected zoom, reset, hover, and click-to-expand controls to the small-map SVG fallback.
 - Made node expansion toggleable: clicking an expanded node now collapses its branch and hides descendants that are no longer connected to the focus path.
 - Made directional edges explicit in the SVG relationship map with visible arrowheads ending at node boundaries.
+- Enlarged graph nodes and added upstream/downstream relationship-count badges to show which nodes can be expanded.
+- Added persistent recent-company history in the sidebar, graph breadcrumbs, and listed-company-first index ordering with stock-code badges.
 - Migrated the client build from Create React App to Vite and updated the React/Tailwind/shadcn UI stack.
 - Replaced `react-force-graph-2d` with AntV G6 for the relationship explorer. The graph now has bounded native zoom, force layout, stable labels, and click-to-expand next-hop relationships.
 - Fixed the two-hop relationship lens so first-hop links are retained and clicking a node expands it in place.
