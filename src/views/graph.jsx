@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Graph } from "@antv/g6";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -75,7 +75,7 @@ function makeGraphData(network, root, mode, details, expandedNodes) {
   if (mode === "invest") addNeighbours(root, "in");
   if (mode === "outvest") addNeighbours(root, "out");
   expandedNodes.forEach((nodeId) => {
-    if (nodeId === root) return;
+    if (nodeId === root || !nodeIds.has(nodeId)) return;
     if (mode === "both") {
       addNeighbours(nodeId, "in");
       addNeighbours(nodeId, "out");
@@ -117,6 +117,7 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
   const center = { x: width / 2, y: height / 2 };
   const root = data.nodes.find((node) => node.data?.isRoot) || data.nodes[0];
   const otherNodes = data.nodes.filter((node) => node.id !== root?.id);
+  const nodesById = new Map(data.nodes.map((node) => [node.id, node]));
   const positions = new Map([[root?.id, center]]);
 
   const ringCapacities = [10, 20, 32, 48];
@@ -139,8 +140,8 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
   return (
     <svg aria-label="Company relationship graph" className="h-full w-full" role="img" viewBox={`0 0 ${width} ${height}`}>
       <defs>
-        <marker id="relationship-arrow" markerHeight="7" markerWidth="7" orient="auto" refX="6" refY="3.5">
-          <path d="M0,0 L7,3.5 L0,7 Z" fill="#94a3b8" />
+        <marker id="relationship-arrow" markerHeight="10" markerUnits="userSpaceOnUse" markerWidth="10" orient="auto" refX="9" refY="5">
+          <path d="M0,0 L10,5 L0,10 Z" fill="#475569" />
         </marker>
       </defs>
       <g transform={`translate(${center.x} ${center.y}) scale(${zoom}) translate(${-center.x} ${-center.y})`}>
@@ -148,7 +149,12 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
         const source = positions.get(edge.source);
         const target = positions.get(edge.target);
         if (!source || !target) return null;
-        return <line key={edge.id} markerEnd="url(#relationship-arrow)" stroke="#94a3b8" strokeWidth="2" x1={source.x} x2={target.x} y1={source.y} y2={target.y} />;
+        const dx = target.x - source.x;
+        const dy = target.y - source.y;
+        const distance = Math.hypot(dx, dy) || 1;
+        const sourceRadius = nodesById.get(edge.source)?.data?.isRoot ? 19 : 15;
+        const targetRadius = nodesById.get(edge.target)?.data?.isRoot ? 25 : 21;
+        return <line key={edge.id} markerEnd="url(#relationship-arrow)" stroke="#94a3b8" strokeWidth="2" x1={source.x + (dx / distance) * sourceRadius} x2={target.x - (dx / distance) * targetRadius} y1={source.y + (dy / distance) * sourceRadius} y2={target.y - (dy / distance) * targetRadius} />;
       })}
       {data.nodes.map((node) => {
         const position = positions.get(node.id);
@@ -230,6 +236,14 @@ function NetworkGraph() {
   );
   const currentView = VIEW_OPTIONS.find((option) => option.id === mode);
   const useLocalRelationshipMap = graphData.nodes.length <= 80;
+  const toggleExpandedNode = useCallback((id) => {
+    setExpandedNodes((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     const container = graphContainerRef.current;
@@ -277,7 +291,7 @@ function NetworkGraph() {
 
     instance.on("node:click", (event) => {
       const id = event.target?.id;
-      if (id) setExpandedNodes((current) => new Set(current).add(id));
+      if (id) toggleExpandedNode(id);
     });
     instance.on("node:pointerenter", (event) => setHoveredNode(event.target?.id || ""));
     instance.on("node:pointerleave", () => setHoveredNode(""));
@@ -286,7 +300,7 @@ function NetworkGraph() {
       instance.destroy();
       graphRef.current = null;
     };
-  }, []);
+  }, [toggleExpandedNode]);
 
   useEffect(() => {
     const instance = graphRef.current;
@@ -330,7 +344,7 @@ function NetworkGraph() {
               <div className="absolute inset-0 z-[1] p-8">
                 <LocalRelationshipMap
                   data={graphData}
-                  onNodeClick={(id) => setExpandedNodes((current) => new Set(current).add(id))}
+                  onNodeClick={toggleExpandedNode}
                   onNodeHover={setHoveredNode}
                   zoom={localZoom}
                 />
@@ -346,7 +360,7 @@ function NetworkGraph() {
               </div>
             )}
             {hoveredNode && <div className="pointer-events-none absolute right-4 top-4 z-10 w-[min(22rem,calc(100%-2rem))] rounded-xl border border-border/80 bg-background/95 p-4 shadow-xl backdrop-blur"><EntityDetails details={details} name={hoveredNode} /></div>}
-            <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 rounded-lg border border-border/70 bg-background/90 px-3 py-2 text-[11px] text-muted-foreground shadow-sm backdrop-blur"><span className="size-2 rounded-full bg-blue-600" /> Focus <span className="size-2 rounded-full bg-teal-700" /> Company <span className="size-2 rounded-full bg-slate-400" /> Entity <span>· 點節點展開</span> {expandedNodes.size > 0 && <span>· {expandedNodes.size} expanded</span>}</div>
+            <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 rounded-lg border border-border/70 bg-background/90 px-3 py-2 text-[11px] text-muted-foreground shadow-sm backdrop-blur"><span className="size-2 rounded-full bg-blue-600" /> Focus <span className="size-2 rounded-full bg-teal-700" /> Company <span className="size-2 rounded-full bg-slate-400" /> Entity <span>· 點節點展開／收合</span> {expandedNodes.size > 0 && <span>· {expandedNodes.size} expanded</span>}</div>
             <div className="absolute bottom-4 right-4 z-10 flex gap-1 rounded-lg border border-border/70 bg-background/90 p-1 shadow-sm backdrop-blur"><Button aria-label="Zoom out" onClick={() => zoom(0.8)} size="icon" variant="ghost"><Minus /></Button><Button aria-label="Reset graph expansion" onClick={resetGraph} size="icon" variant="ghost"><RefreshCw /></Button><Button aria-label="Zoom in" onClick={() => zoom(1.2)} size="icon" variant="ghost"><Plus /></Button></div>
           </div></CardContent>
         </Card>
