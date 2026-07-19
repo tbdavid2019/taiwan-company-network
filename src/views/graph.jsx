@@ -171,7 +171,7 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
     <svg aria-label="Company relationship graph" className="h-full w-full" role="img" viewBox={`0 0 ${width} ${height}`}>
       <defs>
         <marker id="relationship-arrow" markerHeight="10" markerUnits="userSpaceOnUse" markerWidth="10" orient="auto" refX="9" refY="5">
-          <path d="M0,0 L10,5 L0,10 Z" fill="#475569" />
+          <path d="M0,0 L10,5 L0,10 Z" fill="#786f66" />
         </marker>
       </defs>
       <g transform={`translate(${center.x} ${center.y}) scale(${zoom}) translate(${-center.x} ${-center.y})`}>
@@ -184,13 +184,13 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
         const distance = Math.hypot(dx, dy) || 1;
         const sourceRadius = nodesById.get(edge.source)?.data?.isRoot ? 24 : 18;
         const targetRadius = nodesById.get(edge.target)?.data?.isRoot ? 30 : 24;
-        return <line key={edge.id} markerEnd="url(#relationship-arrow)" stroke="#94a3b8" strokeWidth="2" x1={source.x + (dx / distance) * sourceRadius} x2={target.x - (dx / distance) * targetRadius} y1={source.y + (dy / distance) * sourceRadius} y2={target.y - (dy / distance) * targetRadius} />;
+        return <line key={edge.id} markerEnd="url(#relationship-arrow)" stroke="#b7aba0" strokeWidth="2" x1={source.x + (dx / distance) * sourceRadius} x2={target.x - (dx / distance) * targetRadius} y1={source.y + (dy / distance) * sourceRadius} y2={target.y - (dy / distance) * targetRadius} />;
       })}
       {data.nodes.map((node) => {
         const position = positions.get(node.id);
         const isRoot = node.data?.isRoot;
         const isCompany = node.data?.kind === "company";
-        const fill = isRoot ? "#2563eb" : isCompany ? "#0f766e" : "#94a3b8";
+        const fill = isRoot ? "#d97757" : isCompany ? "#2f7d6d" : "#877666";
         const label = String(node.data?.name || node.id);
         const upstreamCount = node.data?.upstreamCount || 0;
         const downstreamCount = node.data?.downstreamCount || 0;
@@ -204,17 +204,17 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
             onMouseEnter={() => onNodeHover(node.id)}
             onMouseLeave={() => onNodeHover("")}
           >
-            {isRoot && <circle cx={position.x} cy={position.y} fill="#bfdbfe" r="34" />}
+            {isRoot && <circle cx={position.x} cy={position.y} fill="#f3d3c7" r="34" />}
             <circle cx={position.x} cy={position.y} fill={fill} r={nodeRadius} stroke="#fff" strokeWidth="3" />
             <g transform={`translate(${position.x - 43} ${badgeY})`}>
-              <rect fill="#eff6ff" height="16" rx="8" stroke="#bfdbfe" width="40" />
-              <text fill="#1d4ed8" fontFamily="Geist Variable, sans-serif" fontSize="10" fontWeight="600" textAnchor="middle" x="20" y="11">上 {upstreamCount}</text>
+              <rect fill="#eef2ff" height="16" rx="8" stroke="#c7d2fe" width="40" />
+              <text fill="#4f46e5" fontFamily="Geist Variable, sans-serif" fontSize="10" fontWeight="600" textAnchor="middle" x="20" y="11">上 {upstreamCount}</text>
             </g>
             <g transform={`translate(${position.x + 3} ${badgeY})`}>
-              <rect fill="#ecfdf5" height="16" rx="8" stroke="#99f6e4" width="40" />
-              <text fill="#0f766e" fontFamily="Geist Variable, sans-serif" fontSize="10" fontWeight="600" textAnchor="middle" x="20" y="11">下 {downstreamCount}</text>
+              <rect fill="#e7f6f1" height="16" rx="8" stroke="#a7e3d3" width="40" />
+              <text fill="#18765f" fontFamily="Geist Variable, sans-serif" fontSize="10" fontWeight="600" textAnchor="middle" x="20" y="11">下 {downstreamCount}</text>
             </g>
-            <text fill={isRoot ? "#1d4ed8" : "#334155"} fontFamily="Geist Variable, sans-serif" fontSize={isRoot ? 16 : 12} fontWeight={isRoot ? 600 : 500} textAnchor="middle" x={position.x} y={position.y + (isRoot ? 48 : 38)}>{label}</text>
+            <text fill={isRoot ? "#9a3412" : "#3f3933"} fontFamily="Geist Variable, sans-serif" fontSize={isRoot ? 16 : 12} fontWeight={isRoot ? 600 : 500} textAnchor="middle" x={position.x} y={position.y + (isRoot ? 48 : 38)}>{label}</text>
           </g>
         );
       })}
@@ -328,12 +328,12 @@ function NetworkGraph() {
           const isCompany = data.kind === "company";
           return {
             size: isRoot ? 38 : 28,
-            fill: isRoot ? "#2563eb" : isCompany ? "#0f766e" : "#94a3b8",
-            stroke: isRoot ? "#bfdbfe" : "#f8fafc",
+            fill: isRoot ? "#d97757" : isCompany ? "#2f7d6d" : "#877666",
+            stroke: isRoot ? "#f3d3c7" : "#faf8f5",
             lineWidth: isRoot ? 8 : 3,
             label: true,
             labelText: `${String(data.name || datum.id)}\n上 ${data.upstreamCount || 0} · 下 ${data.downstreamCount || 0}`,
-            labelFill: isRoot ? "#1d4ed8" : "#334155",
+            labelFill: isRoot ? "#9a3412" : "#3f3933",
             labelFontSize: isRoot ? 14 : 12,
             labelFontWeight: isRoot ? 600 : 400,
             labelPlacement: "bottom",
@@ -343,7 +343,7 @@ function NetworkGraph() {
           };
         },
       },
-      edge: { style: { stroke: "#cbd5e1", lineWidth: 1.4, endArrow: true, endArrowSize: 5 } },
+      edge: { style: { stroke: "#b7aba0", lineWidth: 1.4, endArrow: true, endArrowSize: 5 } },
     });
 
     instance.on("node:click", (event) => {
@@ -392,11 +392,11 @@ function NetworkGraph() {
 
   return (
     <div className="fade-in">
-      <Header actions={<Button onClick={() => navigate("/index")} variant="outline"><ArrowLeft />Back to index</Button>} breadcrumbs={[{ label: "Companies", to: "/index" }, { label: "Relationship graph" }, ...(company ? [{ label: company }] : [])]} description="Start with all direct relationships, then click a node to expand the next layer in place." eyebrow="Network explorer" title={company || "Relationship graph"} />
+      <Header actions={<Button onClick={() => navigate("/index")} variant="outline"><ArrowLeft />Back to index</Button>} title={company || "Relationship graph"} />
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <Card className="min-w-0 overflow-hidden">
-          <CardHeader className="border-b border-border/70 bg-muted/20 px-5 py-4 sm:px-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><CardTitle className="flex items-center gap-2 text-base"><Network className="size-4 text-primary" />{currentView?.label}</CardTitle><p className="mt-1 text-xs text-muted-foreground">{graphData.nodes.length} nodes · {graphData.edges.length} links</p></div><Badge variant="outline">{currentView?.hint}</Badge></div></CardHeader>
-          <CardContent className="p-0"><div className="relative h-[560px] w-full overflow-hidden bg-slate-50 md:h-[640px]" ref={graphContainerRef}>
+          <CardHeader className="border-b border-border/70 bg-muted/20 px-5 py-4 sm:px-6"><div className="mb-4 flex flex-wrap gap-2">{VIEW_OPTIONS.map((option) => { const Icon = option.icon; const active = option.id === mode; return <Button className="gap-2" key={option.id} onClick={() => setMode(option.id)} size="sm" variant={active ? "default" : "outline"}><Icon className="size-3.5" />{option.label}</Button>; })}</div><div className="flex flex-wrap items-center justify-between gap-3"><div><CardTitle className="flex items-center gap-2 text-base"><Network className="size-4 text-primary" />{currentView?.label}</CardTitle><p className="mt-1 text-xs text-muted-foreground">{graphData.nodes.length} nodes · {graphData.edges.length} links</p></div><Badge variant="outline">{currentView?.hint}</Badge></div></CardHeader>
+          <CardContent className="p-0"><div className="relative h-[560px] w-full overflow-hidden bg-[#faf8f5] md:h-[640px]" ref={graphContainerRef}>
             {useLocalRelationshipMap && graphData.edges.length > 0 && (
               <div className="absolute inset-0 z-[1] p-8">
                 <LocalRelationshipMap
@@ -417,12 +417,11 @@ function NetworkGraph() {
               </div>
             )}
             {hoveredNode && <div className="pointer-events-none absolute right-4 top-4 z-10 w-[min(22rem,calc(100%-2rem))] rounded-xl border border-border/80 bg-background/95 p-4 shadow-xl backdrop-blur"><EntityDetails details={details} name={hoveredNode} /></div>}
-            <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 rounded-lg border border-border/70 bg-background/90 px-3 py-2 text-[11px] text-muted-foreground shadow-sm backdrop-blur"><span className="size-2 rounded-full bg-blue-600" /> Focus <span className="size-2 rounded-full bg-teal-700" /> Company <span className="size-2 rounded-full bg-slate-400" /> Entity <span>· 上／下數＝可展開關係</span> {expandedNodes.size > 0 && <span>· {expandedNodes.size} expanded</span>}</div>
+            <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 rounded-lg border border-border/70 bg-[#fffdf9]/95 px-3 py-2 text-[11px] text-muted-foreground shadow-sm backdrop-blur"><span className="size-2 rounded-full bg-[#d97757]" /> Focus <span className="size-2 rounded-full bg-[#2f7d6d]" /> Company <span className="size-2 rounded-full bg-[#877666]" /> Entity <span>· 上／下數＝可展開關係</span> {expandedNodes.size > 0 && <span>· {expandedNodes.size} expanded</span>}</div>
             <div className="absolute bottom-4 right-4 z-10 flex gap-1 rounded-lg border border-border/70 bg-background/90 p-1 shadow-sm backdrop-blur"><Button aria-label="Zoom out" onClick={() => zoom(0.8)} size="icon" variant="ghost"><Minus /></Button><Button aria-label="Reset graph expansion" onClick={resetGraph} size="icon" variant="ghost"><RefreshCw /></Button><Button aria-label="Zoom in" onClick={() => zoom(1.2)} size="icon" variant="ghost"><Plus /></Button></div>
           </div></CardContent>
         </Card>
         <aside className="space-y-5">
-          <Card><CardHeader className="px-5 pb-3 pt-5"><CardTitle className="text-sm">Relationship lens</CardTitle><p className="text-xs leading-5 text-muted-foreground">Choose which direction to follow from the focus node.</p></CardHeader><CardContent className="space-y-2 px-5 pb-5">{VIEW_OPTIONS.map((option) => { const Icon = option.icon; const active = option.id === mode; return <Button className={`h-auto w-full justify-start gap-3 px-3 py-2.5 text-left ${active ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`} key={option.id} onClick={() => setMode(option.id)} variant={active ? "default" : "ghost"}><Icon className="size-4 shrink-0" /><span className="min-w-0"><span className="block truncate text-xs font-medium">{option.label}</span><span className={`block truncate text-[10px] ${active ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{option.hint}</span></span></Button>; })}</CardContent></Card>
           <Card><CardHeader className="px-5 pb-3 pt-5"><CardTitle className="text-sm">Focus entity</CardTitle></CardHeader><CardContent className="px-5 pb-5"><EntityDetails details={details} name={company} /><Separator className="my-4" /><p className="text-[11px] leading-5 text-muted-foreground">The source field currently represents legal-person relationships. Treat the edge as a network connection until ownership semantics are verified.</p></CardContent></Card>
           {activeNode && activeNodeConnections && <Card><CardHeader className="px-5 pb-3 pt-5"><CardTitle className="text-sm">Expanded entity</CardTitle><p className="text-xs leading-5 text-muted-foreground">Entities opened from the node you last clicked.</p></CardHeader><CardContent className="space-y-4 px-5 pb-5"><EntityDetails details={details} name={activeNode} /><Separator /><ExpansionEntityList icon={ArrowDownLeft} label="Upstream entities" names={activeNodeConnections.incoming} tone="text-blue-600" /><ExpansionEntityList icon={ArrowUpRight} label="Downstream entities" names={activeNodeConnections.outgoing} tone="text-teal-700" /></CardContent></Card>}
         </aside>

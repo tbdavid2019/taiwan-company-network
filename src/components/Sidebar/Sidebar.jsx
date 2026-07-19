@@ -158,9 +158,6 @@ function Sidebar({ routes = [], isOpen, onClose }) {
           )}
         </div>
 
-        <div className="border-t border-white/10 px-5 py-4 text-[11px] text-slate-500">
-          Ministry of Economic Affairs data
-        </div>
       </aside>
     </>
   );
