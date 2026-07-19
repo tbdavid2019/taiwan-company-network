@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Taiwan Company Network</title>
+    <script>
+      (function (location) {
+        var repository = "/taiwan-company-network";
+        var path = location.pathname.indexOf(repository + "/") === 0
+          ? location.pathname.slice(repository.length + 1)
+          : location.pathname.replace(/^\/+/, "");
+        var query = location.search
+          ? "&" + location.search.slice(1).replace(/&/g, "~and~")
+          : "";
+        location.replace(
+          location.protocol + "//" + location.host + repository + "/?/" +
+          path.replace(/&/g, "~and~") + query + location.hash,
+        );
+      }(window.location));
+    </script>
+  </head>
+  <body>Loading Taiwan Company Network…</body>
+</html>

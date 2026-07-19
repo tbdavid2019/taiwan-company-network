@@ -1,42 +1,33 @@
 {
-  "name": "argon-dashboard-react",
-  "version": "1.2.0",
-  "description": "React version of Argon Dashboard by Creative Tim",
-  "main": "index.js",
+  "name": "taiwan-company-network",
+  "version": "2.0.0",
+  "description": "Modern React explorer for Taiwan company relationships",
+  "private": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/creativetimofficial/argon-dashboard-react.git"
+    "url": "git+https://github.com/tbdavid2019/taiwan-company-network.git"
   },
   "keywords": [
     "react",
     "reactjs",
-    "argon",
-    "argon-react",
-    "dashboard",
-    "dashboard-react",
-    "argon-dashboard",
-    "argon-dashboard-react"
+    "vite",
+    "graph",
+    "network-analysis",
+    "taiwan-company-data"
   ],
-  "author": "Creative Tim",
-  "license": "MIT",
+  "author": "voidful",
+  "license": "AGPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/creativetimofficial/argon-dashboard-react/issues"
+    "url": "https://github.com/tbdavid2019/taiwan-company-network/issues"
   },
-  "homepage": "https://eric-lam.com/taiwan-company-network/",
+  "homepage": "https://tbdavid2019.github.io/taiwan-company-network/",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "install:clean": "rm -rf node_modules/ && rm -rf package-lock.json && npm install && npm start",
-    "compile-sass": "sass src/assets/scss/argon-dashboard-react.scss src/assets/css/argon-dashboard-react.css",
-    "minify-sass": "sass src/assets/scss/argon-dashboard-react.scss src/assets/css/argon-dashboard-react.min.css --style compressed",
-    "map-sass": "sass src/assets/scss/argon-dashboard-react.scss src/assets/css/argon-dashboard-react.css --source-map",
+    "start": "vite",
+    "dev": "vite",
+    "build": "vite build --base=/taiwan-company-network/",
+    "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
+    "deploy": "gh-pages -d dist"
   },
   "browserslist": [
     ">0.2%",
@@ -45,26 +36,27 @@
     "not op_mini all"
   ],
   "dependencies": {
-    "@fortawesome/fontawesome-free": "^6.5.0",
-    "classnames": "^2.5.0",
-    "d3": "^5.16.0",
-    "moment": "^2.30.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "@base-ui/react": "^1.6.0",
+    "@fontsource-variable/geist": "^5.2.9",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.25.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "react-force-graph-2d": "^1.25.4",
     "react-router-dom": "^6.22.0",
-    "react-scripts": "^5.0.1",
-    "reactstrap": "^9.2.0",
-    "sass": "^1.70.0"
+    "tailwind-merge": "^3.6.0",
+    "tw-animate-css": "^1.4.0"
   },
   "devDependencies": {
-    "@types/googlemaps": "3.39.2",
-    "@types/markerclustererplus": "2.1.33",
-    "@types/react": "16.9.19",
-    "eslint-plugin-flowtype": "3.13.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
     "gh-pages": "^6.3.0",
-    "gulp": "4.0.2",
-    "gulp-append-prepend": "1.0.8",
-    "typescript": "3.7.5"
+    "shadcn": "^4.13.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vite": "^8.1.5"
   }
 }

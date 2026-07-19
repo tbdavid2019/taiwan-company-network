@@ -26,6 +26,9 @@ yarn-error.log*
 build
 /build
 ./build
+dist
+/dist
+./dist
 
 cache
 /cache

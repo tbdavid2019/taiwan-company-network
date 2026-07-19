@@ -14,4 +14,4 @@ RUN pip3 install -r /usr/src/app/requirements.txt
 # Copy source project
 COPY . /usr/src/app/
 
-CMD python3 server.py --port 8070 --static-dir ./build
+CMD python3 server.py --port 8070 --static-dir ./dist

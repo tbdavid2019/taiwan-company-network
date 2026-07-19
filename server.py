@@ -44,7 +44,7 @@ def make_app(static_dir: str = None) -> Flask:
 
 def main(args):
     parser = argparse.ArgumentParser(description='Serve up a simple model')
-    parser.add_argument('--static-dir', default='./build', type=str, help='serve index.html from this directory')
+    parser.add_argument('--static-dir', default='./dist', type=str, help='serve index.html from this directory')
     parser.add_argument('--port', type=int, default=80, help='port to serve the demo on')
 
     args = parser.parse_args(args)
