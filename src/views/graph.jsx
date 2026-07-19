@@ -117,6 +117,30 @@ function EntityDetails({ name, details }) {
   );
 }
 
+function ExpansionEntityList({ icon: Icon, label, names, tone }) {
+  const [showAll, setShowAll] = useState(false);
+  const visibleNames = showAll ? names : names.slice(0, 8);
+
+  useEffect(() => setShowAll(false), [names]);
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+        <span className="flex items-center gap-1.5 font-medium"><Icon className={`size-3.5 ${tone}`} />{label}</span>
+        <Badge variant="secondary">{names.length}</Badge>
+      </div>
+      {names.length === 0 ? <p className="text-xs text-muted-foreground">No direct entities in this direction.</p> : (
+        <>
+          <ul className="space-y-1.5">
+            {visibleNames.map((name) => <li className="truncate rounded-md bg-muted/50 px-2 py-1.5 text-xs" key={name}>{name}</li>)}
+          </ul>
+          {names.length > 8 && <Button className="mt-2 h-7 px-2 text-[11px]" onClick={() => setShowAll((value) => !value)} variant="ghost">{showAll ? "Show less" : `Show all ${names.length}`}</Button>}
+        </>
+      )}
+    </div>
+  );
+}
+
 function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
   const width = 1200;
   const height = 720;
@@ -212,6 +236,7 @@ function NetworkGraph() {
   const [mode, setMode] = useState("both");
   const [expandedNodes, setExpandedNodes] = useState(() => new Set());
   const [hoveredNode, setHoveredNode] = useState("");
+  const [activeNode, setActiveNode] = useState("");
   const [localZoom, setLocalZoom] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -241,6 +266,7 @@ function NetworkGraph() {
   useEffect(() => {
     setExpandedNodes(new Set());
     setLocalZoom(1);
+    setActiveNode("");
   }, [company, mode]);
 
   useEffect(() => {
@@ -263,6 +289,18 @@ function NetworkGraph() {
       return next;
     });
   }, []);
+  const selectExpansionNode = useCallback((id) => {
+    setActiveNode(id);
+    toggleExpandedNode(id);
+  }, [toggleExpandedNode]);
+  const activeNodeConnections = useMemo(() => {
+    if (!activeNode) return null;
+    const node = network[activeNode] || { in: [], out: [] };
+    return {
+      incoming: mode === "outvest" ? [] : node.in || [],
+      outgoing: mode === "invest" ? [] : node.out || [],
+    };
+  }, [activeNode, mode, network]);
 
   useEffect(() => {
     const container = graphContainerRef.current;
@@ -310,7 +348,7 @@ function NetworkGraph() {
 
     instance.on("node:click", (event) => {
       const id = event.target?.id;
-      if (id) toggleExpandedNode(id);
+      if (id) selectExpansionNode(id);
     });
     instance.on("node:pointerenter", (event) => setHoveredNode(event.target?.id || ""));
     instance.on("node:pointerleave", () => setHoveredNode(""));
@@ -319,7 +357,7 @@ function NetworkGraph() {
       instance.destroy();
       graphRef.current = null;
     };
-  }, [toggleExpandedNode]);
+  }, [selectExpansionNode]);
 
   useEffect(() => {
     const instance = graphRef.current;
@@ -363,7 +401,7 @@ function NetworkGraph() {
               <div className="absolute inset-0 z-[1] p-8">
                 <LocalRelationshipMap
                   data={graphData}
-                  onNodeClick={toggleExpandedNode}
+                  onNodeClick={selectExpansionNode}
                   onNodeHover={setHoveredNode}
                   zoom={localZoom}
                 />
@@ -386,6 +424,7 @@ function NetworkGraph() {
         <aside className="space-y-5">
           <Card><CardHeader className="px-5 pb-3 pt-5"><CardTitle className="text-sm">Relationship lens</CardTitle><p className="text-xs leading-5 text-muted-foreground">Choose which direction to follow from the focus node.</p></CardHeader><CardContent className="space-y-2 px-5 pb-5">{VIEW_OPTIONS.map((option) => { const Icon = option.icon; const active = option.id === mode; return <Button className={`h-auto w-full justify-start gap-3 px-3 py-2.5 text-left ${active ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`} key={option.id} onClick={() => setMode(option.id)} variant={active ? "default" : "ghost"}><Icon className="size-4 shrink-0" /><span className="min-w-0"><span className="block truncate text-xs font-medium">{option.label}</span><span className={`block truncate text-[10px] ${active ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{option.hint}</span></span></Button>; })}</CardContent></Card>
           <Card><CardHeader className="px-5 pb-3 pt-5"><CardTitle className="text-sm">Focus entity</CardTitle></CardHeader><CardContent className="px-5 pb-5"><EntityDetails details={details} name={company} /><Separator className="my-4" /><p className="text-[11px] leading-5 text-muted-foreground">The source field currently represents legal-person relationships. Treat the edge as a network connection until ownership semantics are verified.</p></CardContent></Card>
+          {activeNode && activeNodeConnections && <Card><CardHeader className="px-5 pb-3 pt-5"><CardTitle className="text-sm">Expanded entity</CardTitle><p className="text-xs leading-5 text-muted-foreground">Entities opened from the node you last clicked.</p></CardHeader><CardContent className="space-y-4 px-5 pb-5"><EntityDetails details={details} name={activeNode} /><Separator /><ExpansionEntityList icon={ArrowDownLeft} label="Upstream entities" names={activeNodeConnections.incoming} tone="text-blue-600" /><ExpansionEntityList icon={ArrowUpRight} label="Downstream entities" names={activeNodeConnections.outgoing} tone="text-teal-700" /></CardContent></Card>}
         </aside>
       </div>
     </div>
