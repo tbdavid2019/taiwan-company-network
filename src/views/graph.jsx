@@ -3,10 +3,7 @@ import { Graph } from "@antv/g6";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowDownLeft,
-  ArrowDownRight,
   ArrowLeft,
-  ArrowRight,
-  ArrowUpLeft,
   ArrowUpRight,
   Building2,
   Compass,
@@ -28,12 +25,9 @@ import { loadCompanyDetails, loadGraph } from "@/lib/companyData";
 import { useCompany } from "context/CompanyContext";
 
 const VIEW_OPTIONS = [
-  { id: "invest", label: "指向焦點", hint: "Direct incoming", icon: ArrowDownLeft },
-  { id: "outvest", label: "焦點指向", hint: "Direct outgoing", icon: ArrowUpRight },
-  { id: "investout", label: "上游的下游", hint: "Incoming then outgoing", icon: ArrowRight },
-  { id: "investin", label: "上游的上游", hint: "Incoming then incoming", icon: ArrowDownRight },
-  { id: "outvestin", label: "下游的上游", hint: "Outgoing then incoming", icon: ArrowUpLeft },
-  { id: "outvestout", label: "下游的下游", hint: "Outgoing then outgoing", icon: ArrowRight },
+  { id: "both", label: "全部關係", hint: "All direct relationships", icon: Network },
+  { id: "invest", label: "上游", hint: "Direct incoming", icon: ArrowDownLeft },
+  { id: "outvest", label: "下游", hint: "Direct outgoing", icon: ArrowUpRight },
 ];
 
 function formatCapital(value) {
@@ -74,24 +68,20 @@ function makeGraphData(network, root, mode, details, expandedNodes) {
   };
 
   ensureNode(root);
+  if (mode === "both") {
+    addNeighbours(root, "in");
+    addNeighbours(root, "out");
+  }
   if (mode === "invest") addNeighbours(root, "in");
   if (mode === "outvest") addNeighbours(root, "out");
-
-  const twoHop = {
-    investout: ["in", "out"],
-    investin: ["in", "in"],
-    outvestin: ["out", "in"],
-    outvestout: ["out", "out"],
-  }[mode];
-
-  if (twoHop) {
-    addNeighbours(root, twoHop[0]);
-    (network[root]?.[twoHop[0]] || []).forEach((entity) => addNeighbours(entity, twoHop[1]));
-  }
-
-  const expansionDirection = twoHop?.[1] || (mode === "invest" ? "in" : "out");
   expandedNodes.forEach((nodeId) => {
-    if (nodeId !== root) addNeighbours(nodeId, expansionDirection);
+    if (nodeId === root) return;
+    if (mode === "both") {
+      addNeighbours(nodeId, "in");
+      addNeighbours(nodeId, "out");
+    } else {
+      addNeighbours(nodeId, mode === "invest" ? "in" : "out");
+    }
   });
 
   return { nodes, edges };
@@ -121,6 +111,68 @@ function EntityDetails({ name, details }) {
   );
 }
 
+function LocalRelationshipMap({ data, onNodeClick, onNodeHover }) {
+  const width = 1200;
+  const height = 720;
+  const center = { x: width / 2, y: height / 2 };
+  const root = data.nodes.find((node) => node.data?.isRoot) || data.nodes[0];
+  const otherNodes = data.nodes.filter((node) => node.id !== root?.id);
+  const positions = new Map([[root?.id, center]]);
+
+  const ringCapacities = [10, 20, 32, 48];
+  let ring = 0;
+  let ringOffset = 0;
+  otherNodes.forEach((node, index) => {
+    while (index >= ringOffset + ringCapacities[ring]) {
+      ringOffset += ringCapacities[ring];
+      ring += 1;
+    }
+    const ringCount = Math.min(ringCapacities[ring], otherNodes.length - ringOffset);
+    const angle = (-Math.PI / 2) + ((index - ringOffset) * (2 * Math.PI)) / ringCount;
+    const radius = 175 + ring * 115;
+    positions.set(node.id, {
+      x: center.x + Math.cos(angle) * radius,
+      y: center.y + Math.sin(angle) * Math.min(radius * 0.68, 270),
+    });
+  });
+
+  return (
+    <svg aria-label="Company relationship graph" className="h-full w-full" role="img" viewBox={`0 0 ${width} ${height}`}>
+      <defs>
+        <marker id="relationship-arrow" markerHeight="7" markerWidth="7" orient="auto" refX="6" refY="3.5">
+          <path d="M0,0 L7,3.5 L0,7 Z" fill="#94a3b8" />
+        </marker>
+      </defs>
+      {data.edges.map((edge) => {
+        const source = positions.get(edge.source);
+        const target = positions.get(edge.target);
+        if (!source || !target) return null;
+        return <line key={edge.id} markerEnd="url(#relationship-arrow)" stroke="#94a3b8" strokeWidth="2" x1={source.x} x2={target.x} y1={source.y} y2={target.y} />;
+      })}
+      {data.nodes.map((node) => {
+        const position = positions.get(node.id);
+        const isRoot = node.data?.isRoot;
+        const isCompany = node.data?.kind === "company";
+        const fill = isRoot ? "#2563eb" : isCompany ? "#0f766e" : "#94a3b8";
+        const label = String(node.data?.name || node.id);
+        return (
+          <g
+            className="cursor-pointer"
+            key={node.id}
+            onClick={() => onNodeClick(node.id)}
+            onMouseEnter={() => onNodeHover(node.id)}
+            onMouseLeave={() => onNodeHover("")}
+          >
+            {isRoot && <circle cx={position.x} cy={position.y} fill="#bfdbfe" r="27" />}
+            <circle cx={position.x} cy={position.y} fill={fill} r={isRoot ? 17 : 13} stroke="#fff" strokeWidth="3" />
+            <text fill={isRoot ? "#1d4ed8" : "#334155"} fontFamily="Geist Variable, sans-serif" fontSize={isRoot ? 16 : 12} fontWeight={isRoot ? 600 : 500} textAnchor="middle" x={position.x} y={position.y + (isRoot ? 43 : 34)}>{label}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 function NetworkGraph() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -131,7 +183,7 @@ function NetworkGraph() {
   const [network, setNetwork] = useState({});
   const [details, setDetails] = useState({});
   const [company, setCompany] = useState("");
-  const [mode, setMode] = useState("invest");
+  const [mode, setMode] = useState("both");
   const [expandedNodes, setExpandedNodes] = useState(() => new Set());
   const [hoveredNode, setHoveredNode] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -171,6 +223,7 @@ function NetworkGraph() {
     [company, details, expandedNodes, mode, network],
   );
   const currentView = VIEW_OPTIONS.find((option) => option.id === mode);
+  const useLocalRelationshipMap = graphData.nodes.length <= 80;
 
   useEffect(() => {
     const container = graphContainerRef.current;
@@ -232,6 +285,13 @@ function NetworkGraph() {
   useEffect(() => {
     const instance = graphRef.current;
     if (!instance || !graphData.nodes.length) return;
+    instance.setLayout(graphData.nodes.length === 1 ? { type: "grid", rows: 1, cols: 1 } : {
+      type: "d3-force",
+      link: { distance: 150 },
+      manyBody: { strength: -520 },
+      collide: { radius: 44 },
+      alphaDecay: 0.08,
+    });
     instance.setData(graphData);
     instance.render().catch((renderError) => setError(renderError.message || "Unable to render the network graph."));
   }, [graphData]);
@@ -248,11 +308,29 @@ function NetworkGraph() {
 
   return (
     <div className="fade-in">
-      <Header actions={<Button onClick={() => navigate("/index")} variant="outline"><ArrowLeft />Back to index</Button>} description="Inspect direct relationships or move two hops through the selected entity. Click a node to expand its next hop in place." eyebrow="Network explorer" title={company || "Relationship graph"} />
+      <Header actions={<Button onClick={() => navigate("/index")} variant="outline"><ArrowLeft />Back to index</Button>} description="Start with all direct relationships, then click a node to expand the next layer in place." eyebrow="Network explorer" title={company || "Relationship graph"} />
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <Card className="min-w-0 overflow-hidden">
           <CardHeader className="border-b border-border/70 bg-muted/20 px-5 py-4 sm:px-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><CardTitle className="flex items-center gap-2 text-base"><Network className="size-4 text-primary" />{currentView?.label}</CardTitle><p className="mt-1 text-xs text-muted-foreground">{graphData.nodes.length} nodes · {graphData.edges.length} links</p></div><Badge variant="outline">{currentView?.hint}</Badge></div></CardHeader>
           <CardContent className="p-0"><div className="relative h-[560px] w-full overflow-hidden bg-slate-50 md:h-[640px]" ref={graphContainerRef}>
+            {useLocalRelationshipMap && graphData.edges.length > 0 && (
+              <div className="absolute inset-0 z-[1] p-8">
+                <LocalRelationshipMap
+                  data={graphData}
+                  onNodeClick={(id) => setExpandedNodes((current) => new Set(current).add(id))}
+                  onNodeHover={setHoveredNode}
+                />
+              </div>
+            )}
+            {graphData.edges.length === 0 && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center p-6">
+                <div className="max-w-sm rounded-2xl border border-border/80 bg-background/95 p-6 text-center shadow-sm">
+                  <span className="mx-auto flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary"><Building2 className="size-5" /></span>
+                  <p className="mt-3 text-sm font-semibold">尚無可視化的法人關係</p>
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">{company} 已有公司登記資料，但目前關係索引沒有可連出的法人代表紀錄，因此沒有邊可以畫出。</p>
+                </div>
+              </div>
+            )}
             {hoveredNode && <div className="pointer-events-none absolute right-4 top-4 z-10 w-[min(22rem,calc(100%-2rem))] rounded-xl border border-border/80 bg-background/95 p-4 shadow-xl backdrop-blur"><EntityDetails details={details} name={hoveredNode} /></div>}
             <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 rounded-lg border border-border/70 bg-background/90 px-3 py-2 text-[11px] text-muted-foreground shadow-sm backdrop-blur"><span className="size-2 rounded-full bg-blue-600" /> Focus <span className="size-2 rounded-full bg-teal-700" /> Company <span className="size-2 rounded-full bg-slate-400" /> Entity {expandedNodes.size > 0 && <span>· {expandedNodes.size} expanded</span>}</div>
             <div className="absolute bottom-4 right-4 z-10 flex gap-1 rounded-lg border border-border/70 bg-background/90 p-1 shadow-sm backdrop-blur"><Button aria-label="Zoom out" onClick={() => zoom(0.8)} size="icon" variant="ghost"><Minus /></Button><Button aria-label="Reset graph expansion" onClick={resetGraph} size="icon" variant="ghost"><RefreshCw /></Button><Button aria-label="Zoom in" onClick={() => zoom(1.2)} size="icon" variant="ghost"><Plus /></Button></div>
