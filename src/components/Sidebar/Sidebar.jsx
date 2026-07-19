@@ -51,7 +51,7 @@ function Sidebar({ routes = [], isOpen, onClose }) {
               <Network className="size-4" />
             </span>
             <span>
-              <span className="block text-sm font-semibold tracking-tight">Taiwan Network</span>
+              <span className="block text-sm font-semibold tracking-tight">888台灣的公司關係網</span>
               <span className="block text-[11px] text-slate-400">Entity explorer</span>
             </span>
           </NavLink>

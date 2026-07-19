@@ -148,7 +148,11 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
   const root = data.nodes.find((node) => node.data?.isRoot) || data.nodes[0];
   const otherNodes = data.nodes.filter((node) => node.id !== root?.id);
   const nodesById = new Map(data.nodes.map((node) => [node.id, node]));
-  const positions = new Map([[root?.id, center]]);
+  const svgRef = useRef(null);
+  const dragRef = useRef(null);
+  const didDragRef = useRef(false);
+  const [draggedPositions, setDraggedPositions] = useState({});
+  const defaultPositions = new Map([[root?.id, center]]);
 
   const ringCapacities = [10, 20, 32, 48];
   let ring = 0;
@@ -161,14 +165,57 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
     const ringCount = Math.min(ringCapacities[ring], otherNodes.length - ringOffset);
     const angle = (-Math.PI / 2) + ((index - ringOffset) * (2 * Math.PI)) / ringCount;
     const radius = 175 + ring * 115;
-    positions.set(node.id, {
+    defaultPositions.set(node.id, {
       x: center.x + Math.cos(angle) * radius,
       y: center.y + Math.sin(angle) * Math.min(radius * 0.68, 270),
     });
   });
 
+  useEffect(() => setDraggedPositions({}), [root?.id]);
+
+  const positions = new Map(defaultPositions);
+  Object.entries(draggedPositions).forEach(([id, position]) => {
+    if (positions.has(id)) positions.set(id, position);
+  });
+  const defaultPoints = [...defaultPositions.values()];
+  const minX = Math.min(...defaultPoints.map((point) => point.x)) - 100;
+  const maxX = Math.max(...defaultPoints.map((point) => point.x)) + 100;
+  const minY = Math.min(...defaultPoints.map((point) => point.y)) - 100;
+  const maxY = Math.max(...defaultPoints.map((point) => point.y)) + 100;
+  const viewBox = { x: minX, y: minY, width: Math.max(260, maxX - minX), height: Math.max(220, maxY - minY) };
+
+  const pointerPosition = (event) => {
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+    return {
+      x: viewBox.x + ((event.clientX - rect.left) / rect.width) * viewBox.width,
+      y: viewBox.y + ((event.clientY - rect.top) / rect.height) * viewBox.height,
+    };
+  };
+  const startDrag = (event, id) => {
+    if (event.button !== 0) return;
+    const point = pointerPosition(event);
+    if (!point) return;
+    dragRef.current = { id, point, origin: positions.get(id), moved: false };
+  };
+  const moveDrag = (event) => {
+    const drag = dragRef.current;
+    const point = pointerPosition(event);
+    if (!drag || !point) return;
+    const deltaX = point.x - drag.point.x;
+    const deltaY = point.y - drag.point.y;
+    if (Math.hypot(deltaX, deltaY) > 2) drag.moved = true;
+    setDraggedPositions((current) => ({ ...current, [drag.id]: { x: drag.origin.x + deltaX, y: drag.origin.y + deltaY } }));
+  };
+  const endDrag = () => {
+    if (!dragRef.current) return;
+    didDragRef.current = dragRef.current.moved;
+    dragRef.current = null;
+    window.setTimeout(() => { didDragRef.current = false; }, 0);
+  };
+
   return (
-    <svg aria-label="Company relationship graph" className="h-full w-full" role="img" viewBox={`0 0 ${width} ${height}`}>
+    <svg aria-label="Company relationship graph" className="h-full w-full" onPointerMove={moveDrag} onPointerUp={endDrag} onPointerLeave={endDrag} ref={svgRef} role="img" style={{ touchAction: "none" }} viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}>
       <defs>
         <marker id="relationship-arrow" markerHeight="10" markerUnits="userSpaceOnUse" markerWidth="10" orient="auto" refX="9" refY="5">
           <path d="M0,0 L10,5 L0,10 Z" fill="#786f66" />
@@ -198,11 +245,12 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
         const badgeY = position.y - nodeRadius - 17;
         return (
           <g
-            className="cursor-pointer"
+            className="cursor-grab active:cursor-grabbing"
             key={node.id}
-            onClick={() => onNodeClick(node.id)}
+            onClick={() => { if (!didDragRef.current) onNodeClick(node.id); }}
             onMouseEnter={() => onNodeHover(node.id)}
             onMouseLeave={() => onNodeHover("")}
+            onPointerDown={(event) => startDrag(event, node.id)}
           >
             {isRoot && <circle cx={position.x} cy={position.y} fill="#f3d3c7" r="34" />}
             <circle cx={position.x} cy={position.y} fill={fill} r={nodeRadius} stroke="#fff" strokeWidth="3" />
@@ -370,7 +418,9 @@ function NetworkGraph() {
       alphaDecay: 0.08,
     });
     instance.setData(graphData);
-    instance.render().catch((renderError) => setError(renderError.message || "Unable to render the network graph."));
+    instance.render()
+      .then(() => instance.fitView({ padding: 72 }, { duration: 180 }))
+      .catch((renderError) => setError(renderError.message || "Unable to render the network graph."));
   }, [graphData]);
 
   const zoom = (factor) => {
@@ -422,7 +472,6 @@ function NetworkGraph() {
           </div></CardContent>
         </Card>
         <aside className="space-y-5">
-          <Card><CardHeader className="px-5 pb-3 pt-5"><CardTitle className="text-sm">Focus entity</CardTitle></CardHeader><CardContent className="px-5 pb-5"><EntityDetails details={details} name={company} /><Separator className="my-4" /><p className="text-[11px] leading-5 text-muted-foreground">The source field currently represents legal-person relationships. Treat the edge as a network connection until ownership semantics are verified.</p></CardContent></Card>
           {activeNode && activeNodeConnections && <Card><CardHeader className="px-5 pb-3 pt-5"><CardTitle className="text-sm">Expanded entity</CardTitle><p className="text-xs leading-5 text-muted-foreground">Entities opened from the node you last clicked.</p></CardHeader><CardContent className="space-y-4 px-5 pb-5"><EntityDetails details={details} name={activeNode} /><Separator /><ExpansionEntityList icon={ArrowDownLeft} label="Upstream entities" names={activeNodeConnections.incoming} tone="text-blue-600" /><ExpansionEntityList icon={ArrowUpRight} label="Downstream entities" names={activeNodeConnections.outgoing} tone="text-teal-700" /></CardContent></Card>}
         </aside>
       </div>
