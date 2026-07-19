@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { loadGraph } from "@/lib/companyData";
+import { loadCompanyAliases, loadCompanyDetails, loadGraph } from "@/lib/companyData";
 import { useCompany } from "context/CompanyContext";
 
 function NetworkStat({ icon: Icon, label, value }) {
@@ -32,7 +32,7 @@ function NetworkStat({ icon: Icon, label, value }) {
   );
 }
 
-function CompanyCard({ name, connected, onClick }) {
+function CompanyCard({ aliases, name, connected, hasCompanyRecord, onClick }) {
   return (
     <button
       className="group flex w-full items-center justify-between gap-4 rounded-xl border border-border/70 bg-card px-4 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -43,8 +43,11 @@ function CompanyCard({ name, connected, onClick }) {
         <span className="block truncate text-sm font-medium text-foreground">{name || "Unnamed entity"}</span>
         <span className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
           <span className={`size-1.5 rounded-full ${connected ? "bg-emerald-500" : "bg-slate-300"}`} />
-          {connected ? "Connected entity" : "Indexed entity"}
+          {connected ? "Connected entity" : hasCompanyRecord ? "Company record" : "Indexed entity"}
         </span>
+        {aliases.length > 0 && (
+          <span className="mt-1 block truncate text-xs text-primary">{aliases.join(" · ")}</span>
+        )}
       </span>
       <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition group-hover:text-primary" />
     </button>
@@ -55,6 +58,8 @@ function CompanyList() {
   const navigate = useNavigate();
   const { setCompanyDetails, setSelectedCompany } = useCompany();
   const [graph, setGraph] = useState({});
+  const [details, setDetails] = useState({});
+  const [aliases, setAliases] = useState({});
   const [query, setQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(24);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,24 +69,66 @@ function CompanyList() {
   useEffect(() => {
     setCompanyDetails(null);
     setSelectedCompany(null);
+    let active = true;
+
     loadGraph()
-      .then(setGraph)
-      .catch((loadError) => setError(loadError.message || "Unable to load the network dataset."))
-      .finally(() => setIsLoading(false));
+      .then((graphData) => {
+        if (active) setGraph(graphData);
+      })
+      .catch((loadError) => {
+        if (active) setError(loadError.message || "Unable to load the network dataset.");
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    loadCompanyDetails()
+      .then((detailsData) => {
+        if (active) setDetails(detailsData);
+      })
+      .catch(() => {
+        // The relationship index remains searchable if company details are unavailable.
+      });
+
+    loadCompanyAliases()
+      .then((aliasData) => {
+        if (active) setAliases(aliasData);
+      })
+      .catch(() => {
+        // Alias matches are optional; registered names remain searchable.
+      });
+
+    return () => {
+      active = false;
+    };
   }, [setCompanyDetails, setSelectedCompany]);
 
-  const entities = useMemo(
-    () => Object.keys(graph).filter(Boolean),
-    [graph],
-  );
+  const entities = useMemo(() => {
+    const graphNames = Object.keys(graph).filter(Boolean);
+    const seen = new Set(graphNames);
+    const detailOnlyNames = Object.keys(details).filter((name) => name && !seen.has(name));
+    return [...graphNames, ...detailOnlyNames];
+  }, [details, graph]);
 
   const stats = useMemo(() => {
     const connected = entities.filter((name) => {
       const node = graph[name];
       return node?.in?.length || node?.out?.length;
     }).length;
-    return { total: entities.length, connected };
-  }, [entities, graph]);
+    return { total: entities.length, connected, companyRecords: Object.keys(details).length };
+  }, [details, entities, graph]);
+
+  const aliasesByName = useMemo(() => {
+    const index = new Map();
+    Object.entries(aliases).forEach(([alias, records]) => {
+      records.forEach(({ name }) => {
+        const current = index.get(name) || [];
+        if (!current.includes(alias)) current.push(alias);
+        index.set(name, current);
+      });
+    });
+    return index;
+  }, [aliases]);
 
   const filteredEntities = useMemo(() => {
     const terms = deferredQuery
@@ -93,12 +140,16 @@ function CompanyList() {
     if (!terms.length) return entities;
     return entities.filter((name) => {
       const normalized = name.toLocaleLowerCase();
-      return terms.every((term) => normalized.includes(term));
+      const companyAliases = aliasesByName.get(name) || [];
+      return terms.every((term) => (
+        normalized.includes(term) || companyAliases.some((alias) => alias.toLocaleLowerCase().includes(term))
+      ));
     });
-  }, [deferredQuery, entities]);
+  }, [aliasesByName, deferredQuery, entities]);
 
   const openEntity = (name) => {
     setSelectedCompany(name);
+    setCompanyDetails(details[name] || null);
     navigate(`/graph?company=${encodeURIComponent(name)}`);
   };
 
@@ -107,18 +158,13 @@ function CompanyList() {
       <Header
         description="Search the indexed network, then open an entity to inspect its direct relationships and two-hop neighbourhood."
         eyebrow="Network directory"
-        title="Explore company relationships"
+        title="Explore companies and relationships"
       />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <NetworkStat icon={Database} label="Indexed entities" value={stats.total} />
+        <NetworkStat icon={Database} label="Searchable entities" value={stats.total} />
         <NetworkStat icon={Network} label="Connected entities" value={stats.connected} />
-        <div className="hidden items-center rounded-xl border border-dashed border-primary/25 bg-primary/[0.04] px-4 py-3 lg:flex">
-          <div>
-            <p className="text-sm font-medium">Start with a name</p>
-            <p className="mt-1 text-xs text-muted-foreground">Click any result to open the graph explorer.</p>
-          </div>
-        </div>
+        <NetworkStat icon={Building2} label="Company records" value={stats.companyRecords} />
       </div>
 
       <Card className="overflow-hidden">
@@ -127,10 +173,10 @@ function CompanyList() {
             <div>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Building2 className="size-4 text-primary" />
-                Entity index
+                Company and entity index
               </CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">
-                {query ? `${filteredEntities.length.toLocaleString()} matches` : "Browse the public relationship index"}
+                {query ? `${filteredEntities.length.toLocaleString()} matches` : "Search company records and the relationship index"}
               </p>
             </div>
             <div className="relative w-full md:max-w-sm">
@@ -142,7 +188,7 @@ function CompanyList() {
                   setQuery(event.target.value);
                   setVisibleCount(24);
                 }}
-                placeholder="Search by company name..."
+                placeholder="Search by registered company name..."
                 value={query}
               />
               {query && (
@@ -193,7 +239,14 @@ function CompanyList() {
                   const node = graph[name];
                   const connected = Boolean(node?.in?.length || node?.out?.length);
                   return (
-                    <CompanyCard connected={connected} key={name} name={name} onClick={() => openEntity(name)} />
+                    <CompanyCard
+                      aliases={aliasesByName.get(name) || []}
+                      connected={connected}
+                      hasCompanyRecord={Boolean(details[name])}
+                      key={name}
+                      name={name}
+                      onClick={() => openEntity(name)}
+                    />
                   );
                 })}
               </div>
@@ -213,7 +266,7 @@ function CompanyList() {
       </Card>
 
       <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-        <span>Search is performed locally against the current index.</span>
+        <span>Search includes company records and the relationship index.</span>
         <Badge className="hidden sm:inline-flex" variant="outline">Open data explorer</Badge>
       </div>
     </div>

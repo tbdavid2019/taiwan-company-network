@@ -19,5 +19,13 @@ export function loadGraph() {
 }
 
 export function loadCompanyDetails() {
-  return loadJson("company_details.json");
+  return loadJson("company_details_manifest.json").then(async ({ chunks }) => {
+    const detailChunks = await Promise.all(chunks.map((fileName) => loadJson(fileName)));
+    return Object.assign({}, ...detailChunks);
+  });
+}
+
+export async function loadCompanyAliases() {
+  const payload = await loadJson("company_aliases.json");
+  return payload.aliases || {};
 }

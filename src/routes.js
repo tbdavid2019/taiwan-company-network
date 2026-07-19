@@ -1,5 +1,7 @@
-import CGraph from "views/graph.jsx";
-import Company from "views/Index.jsx";
+import { lazy } from "react";
+
+const CGraph = lazy(() => import("views/graph.jsx"));
+const Company = lazy(() => import("views/Index.jsx"));
 
 const routes = [
   {
