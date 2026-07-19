@@ -13,6 +13,7 @@ import {
   LoaderCircle,
   MapPin,
   Minus,
+  Network,
   Plus,
   RefreshCw,
   UserRound,
