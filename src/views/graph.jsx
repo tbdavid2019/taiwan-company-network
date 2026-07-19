@@ -111,7 +111,7 @@ function EntityDetails({ name, details }) {
   );
 }
 
-function LocalRelationshipMap({ data, onNodeClick, onNodeHover }) {
+function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
   const width = 1200;
   const height = 720;
   const center = { x: width / 2, y: height / 2 };
@@ -143,6 +143,7 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover }) {
           <path d="M0,0 L7,3.5 L0,7 Z" fill="#94a3b8" />
         </marker>
       </defs>
+      <g transform={`translate(${center.x} ${center.y}) scale(${zoom}) translate(${-center.x} ${-center.y})`}>
       {data.edges.map((edge) => {
         const source = positions.get(edge.source);
         const target = positions.get(edge.target);
@@ -169,6 +170,7 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover }) {
           </g>
         );
       })}
+      </g>
     </svg>
   );
 }
@@ -186,6 +188,7 @@ function NetworkGraph() {
   const [mode, setMode] = useState("both");
   const [expandedNodes, setExpandedNodes] = useState(() => new Set());
   const [hoveredNode, setHoveredNode] = useState("");
+  const [localZoom, setLocalZoom] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const requestedCompany = searchParams.get("company") || location.state?.company;
@@ -211,7 +214,10 @@ function NetworkGraph() {
     if (Object.keys(network).length && requestedCompany) setCompany(requestedCompany);
   }, [network, requestedCompany]);
 
-  useEffect(() => { setExpandedNodes(new Set()); }, [company, mode]);
+  useEffect(() => {
+    setExpandedNodes(new Set());
+    setLocalZoom(1);
+  }, [company, mode]);
 
   useEffect(() => {
     setSelectedCompany(company || null);
@@ -296,10 +302,17 @@ function NetworkGraph() {
     instance.render().catch((renderError) => setError(renderError.message || "Unable to render the network graph."));
   }, [graphData]);
 
-  const zoom = (factor) => graphRef.current?.zoomBy(factor, { duration: 180 });
+  const zoom = (factor) => {
+    if (useLocalRelationshipMap) {
+      setLocalZoom((current) => Math.min(2.4, Math.max(0.65, current * factor)));
+      return;
+    }
+    graphRef.current?.zoomBy(factor, { duration: 180 });
+  };
   const resetGraph = () => {
     setHoveredNode("");
     setExpandedNodes(new Set());
+    setLocalZoom(1);
     requestAnimationFrame(() => graphRef.current?.fitView({ padding: 72 }, { duration: 220 }));
   };
 
@@ -319,6 +332,7 @@ function NetworkGraph() {
                   data={graphData}
                   onNodeClick={(id) => setExpandedNodes((current) => new Set(current).add(id))}
                   onNodeHover={setHoveredNode}
+                  zoom={localZoom}
                 />
               </div>
             )}
@@ -332,7 +346,7 @@ function NetworkGraph() {
               </div>
             )}
             {hoveredNode && <div className="pointer-events-none absolute right-4 top-4 z-10 w-[min(22rem,calc(100%-2rem))] rounded-xl border border-border/80 bg-background/95 p-4 shadow-xl backdrop-blur"><EntityDetails details={details} name={hoveredNode} /></div>}
-            <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 rounded-lg border border-border/70 bg-background/90 px-3 py-2 text-[11px] text-muted-foreground shadow-sm backdrop-blur"><span className="size-2 rounded-full bg-blue-600" /> Focus <span className="size-2 rounded-full bg-teal-700" /> Company <span className="size-2 rounded-full bg-slate-400" /> Entity {expandedNodes.size > 0 && <span>· {expandedNodes.size} expanded</span>}</div>
+            <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 rounded-lg border border-border/70 bg-background/90 px-3 py-2 text-[11px] text-muted-foreground shadow-sm backdrop-blur"><span className="size-2 rounded-full bg-blue-600" /> Focus <span className="size-2 rounded-full bg-teal-700" /> Company <span className="size-2 rounded-full bg-slate-400" /> Entity <span>· 點節點展開</span> {expandedNodes.size > 0 && <span>· {expandedNodes.size} expanded</span>}</div>
             <div className="absolute bottom-4 right-4 z-10 flex gap-1 rounded-lg border border-border/70 bg-background/90 p-1 shadow-sm backdrop-blur"><Button aria-label="Zoom out" onClick={() => zoom(0.8)} size="icon" variant="ghost"><Minus /></Button><Button aria-label="Reset graph expansion" onClick={resetGraph} size="icon" variant="ghost"><RefreshCw /></Button><Button aria-label="Zoom in" onClick={() => zoom(1.2)} size="icon" variant="ghost"><Plus /></Button></div>
           </div></CardContent>
         </Card>
