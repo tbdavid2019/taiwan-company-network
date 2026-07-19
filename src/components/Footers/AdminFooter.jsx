@@ -16,6 +16,15 @@ function AdminFooter() {
           </a>
           <span aria-hidden="true">·</span>
           <span>AGPL-3.0-or-later</span>
+          <span aria-hidden="true">·</span>
+          <a
+            className="underline-offset-4 hover:text-foreground hover:underline"
+            href="https://david888.com"
+            rel="noreferrer"
+            target="_blank"
+          >
+            david888.com
+          </a>
         </span>
       </div>
     </footer>
