@@ -5,12 +5,7 @@
     "version": "1.0.0",
     "description": "Read-only company registration summaries and relationship-index links. Relationship links are not independently verified ownership claims."
   },
-  "servers": [
-    {
-      "url": "http://127.0.0.1:8787/api/v1",
-      "description": "Local service"
-    }
-  ],
+  "servers": [],
   "paths": {
     "/health": {
       "get": {
