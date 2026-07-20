@@ -35,7 +35,11 @@ npm run build
 
 公開 Skill 頁面：<https://tbdavid2019.github.io/taiwan-company-network/skill>
 
-頁面內可直接閱讀、複製或下載 `SKILL.md`。REST/MCP 的程式碼已保留於 repository，但在公開遠端端點正式部署前，不宣告為可用服務。
+頁面內可直接閱讀、複製或下載 `SKILL.md`。Skill 會引導 LLM 以 GET 呼叫公開的靜態 JSON API：
+
+`https://tbdavid2019.github.io/taiwan-company-network/api/v1/index.json`
+
+API 依公司名稱首字分片，並提供股票代號索引；不需要驗證，也不提供寫入方法或 MCP。
 
 重新建立公司關係資料（會下載公開快照，並可從 `cache/` 續跑）：
 

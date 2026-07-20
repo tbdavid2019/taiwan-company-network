@@ -12,7 +12,7 @@ All notable changes to this project are documented in this file.
 - Added unit coverage for page-title generation and graph viewport zoom calculations.
 - Updated compatible transitive dependencies to resolve the current npm security advisories.
 - Added complete search and social metadata, canonical URL, Open Graph and Twitter Card tags, JSON-LD structured data, static crawler-visible H1 content, SVG/32px favicons, and a 1200×630 social preview image.
-- Added a read-only Taiwan company REST API, MCP server with search/detail/relationship tools, and a public Agent Skill linked from the site footer.
+- Added a public GET-only static company API and an Agent Skill that teaches LLMs how to resolve company shards, stock-code aliases, details, and relationships.
 - Added an in-site Skill page with readable instructions plus copy and download actions.
 
 ## 2026-07-19
