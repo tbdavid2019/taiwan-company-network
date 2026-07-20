@@ -4,9 +4,9 @@ Explore Taiwan company registration summaries and direct relationship-index link
 
 ## Agent Skill
 
-- Skill instructions: https://tbdavid2019.github.io/taiwan-company-network/skill
-- API contract: https://tbdavid2019.github.io/taiwan-company-network/openapi.json
-- GET API index: https://tbdavid2019.github.io/taiwan-company-network/api/v1/index.json
+- Skill instructions: https://taiwan-company-network.david888.com/skill/
+- API contract: https://taiwan-company-network.david888.com/openapi.json
+- GET API index: https://taiwan-company-network.david888.com/api/v1/index.json
 - Source: https://github.com/tbdavid2019/taiwan-company-network
 
 Relationship links are index data and must not be described as independently verified ownership or investment claims.

@@ -33,11 +33,11 @@ npm run build
 
 ## Agent Skill
 
-公開 Skill 頁面：<https://tbdavid2019.github.io/taiwan-company-network/skill>
+公開 Skill 頁面：<https://taiwan-company-network.david888.com/skill/>
 
 頁面內可直接閱讀、複製或下載 `SKILL.md`。Skill 會引導 LLM 以 GET 呼叫公開的靜態 JSON API：
 
-`https://tbdavid2019.github.io/taiwan-company-network/api/v1/index.json`
+`https://taiwan-company-network.david888.com/api/v1/index.json`
 
 API 依公司名稱首字分片，並提供股票代號索引；不需要驗證，也不提供寫入方法或 MCP。
 
@@ -55,7 +55,7 @@ npm run deploy
 ```
 
 預設網址為：
-`https://tbdavid2019.github.io/taiwan-company-network/`
+`https://taiwan-company-network.david888.com/`
 
 ## 資料與圖表說明
 

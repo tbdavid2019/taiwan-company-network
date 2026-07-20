@@ -2,7 +2,7 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const SITE_URL = "https://tbdavid2019.github.io/taiwan-company-network";
+const SITE_URL = "https://taiwan-company-network.david888.com";
 
 export function shardFileName(companyName) {
   const firstCharacter = Array.from(companyName)[0];
