@@ -6,15 +6,20 @@
     <title>Taiwan Company Network</title>
     <script>
       (function (location) {
-        var repository = "/taiwan-company-network";
-        var path = location.pathname.indexOf(repository + "/") === 0
-          ? location.pathname.slice(repository.length + 1)
-          : location.pathname.replace(/^\/+/, "");
+        var brokenGraph = location.href.match(/~\/graph~and~company=([^&#]+)/);
+        if (brokenGraph) {
+          location.replace(location.origin + "/graph?company=" + brokenGraph[1]);
+          return;
+        }
+        var path = location.pathname.replace(/^\/+/, "");
+        if (path.indexOf("taiwan-company-network/") === 0) {
+          path = path.slice("taiwan-company-network/".length);
+        }
         var query = location.search
           ? "&" + location.search.slice(1).replace(/&/g, "~and~")
           : "";
         location.replace(
-          location.protocol + "//" + location.host + repository + "/?/" +
+          location.origin + "/?/" +
           path.replace(/&/g, "~and~") + query + location.hash,
         );
       }(window.location));

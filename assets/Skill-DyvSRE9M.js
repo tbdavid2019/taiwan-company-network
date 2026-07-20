@@ -1,4 +1,4 @@
-import{E as e,a as t,b as n,f as r,i,k as a,o,r as s,x as c}from"./index-Br_ztO5-.js";import{t as l}from"./Header-Bcji8Yyk.js";var u=n(`bot`,[[`path`,{d:`M12 8V4H8`,key:`hb8ula`}],[`rect`,{width:`16`,height:`12`,x:`4`,y:`8`,rx:`2`,key:`enze0r`}],[`path`,{d:`M2 14h2`,key:`vft8re`}],[`path`,{d:`M20 14h2`,key:`4cs60a`}],[`path`,{d:`M15 13v2`,key:`1xurst`}],[`path`,{d:`M9 13v2`,key:`rq6x2g`}]]),d=n(`check`,[[`path`,{d:`M20 6 9 17l-5-5`,key:`1gmf2c`}]]),f=n(`copy`,[[`rect`,{width:`14`,height:`14`,x:`8`,y:`8`,rx:`2`,ry:`2`,key:`17jyea`}],[`path`,{d:`M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2`,key:`zix9uf`}]]),p=n(`download`,[[`path`,{d:`M12 15V3`,key:`m9g1x1`}],[`path`,{d:`M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4`,key:`ih7n3h`}],[`path`,{d:`m7 10 5 5 5-5`,key:`brsn70`}]]),m=a(e(),1),h=`---
+import{E as e,a as t,b as n,f as r,i,k as a,o,r as s,x as c}from"./index-Cb_ItnXq.js";import{t as l}from"./Header-B99kcxWn.js";var u=n(`bot`,[[`path`,{d:`M12 8V4H8`,key:`hb8ula`}],[`rect`,{width:`16`,height:`12`,x:`4`,y:`8`,rx:`2`,key:`enze0r`}],[`path`,{d:`M2 14h2`,key:`vft8re`}],[`path`,{d:`M20 14h2`,key:`4cs60a`}],[`path`,{d:`M15 13v2`,key:`1xurst`}],[`path`,{d:`M9 13v2`,key:`rq6x2g`}]]),d=n(`check`,[[`path`,{d:`M20 6 9 17l-5-5`,key:`1gmf2c`}]]),f=n(`copy`,[[`rect`,{width:`14`,height:`14`,x:`8`,y:`8`,rx:`2`,ry:`2`,key:`17jyea`}],[`path`,{d:`M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2`,key:`zix9uf`}]]),p=n(`download`,[[`path`,{d:`M12 15V3`,key:`m9g1x1`}],[`path`,{d:`M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4`,key:`ih7n3h`}],[`path`,{d:`m7 10 5 5 5-5`,key:`brsn70`}]]),m=a(e(),1),h=`---
 name: taiwan-company-network
 description: Queries the public read-only Taiwan Company Network API for company registration summaries, stock-code aliases, and direct relationship-index links. Use when an agent needs to find a Taiwan company by registered name or TWSE/TPEx stock code, inspect its basic data, enumerate upstream or downstream entities, or provide its interactive graph URL.
 ---
@@ -9,7 +9,7 @@ description: Queries the public read-only Taiwan Company Network API for company
 
 Use only HTTP GET requests against:
 
-\`https://tbdavid2019.github.io/taiwan-company-network/api/v1/\`
+\`https://taiwan-company-network.david888.com/api/v1/\`
 
 No authentication is required. Do not attempt POST, PUT, PATCH, DELETE, MCP, or local server connections.
 
@@ -28,7 +28,7 @@ No authentication is required. Do not attempt POST, PUT, PATCH, DELETE, MCP, or 
 
 For 中聯油脂股份有限公司:
 
-1. GET \`https://tbdavid2019.github.io/taiwan-company-network/api/v1/index.json\`.
+1. GET \`https://taiwan-company-network.david888.com/api/v1/index.json\`.
 2. Read \`companyShards["中"]\`, which identifies the shard.
 3. GET that shard URL relative to the API base.
 4. Read \`data["中聯油脂股份有限公司"]\`.

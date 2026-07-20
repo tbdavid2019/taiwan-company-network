@@ -9,7 +9,7 @@ description: Queries the public read-only Taiwan Company Network API for company
 
 Use only HTTP GET requests against:
 
-`https://tbdavid2019.github.io/taiwan-company-network/api/v1/`
+`https://taiwan-company-network.david888.com/api/v1/`
 
 No authentication is required. Do not attempt POST, PUT, PATCH, DELETE, MCP, or local server connections.
 
@@ -28,7 +28,7 @@ No authentication is required. Do not attempt POST, PUT, PATCH, DELETE, MCP, or 
 
 For 中聯油脂股份有限公司:
 
-1. GET `https://tbdavid2019.github.io/taiwan-company-network/api/v1/index.json`.
+1. GET `https://taiwan-company-network.david888.com/api/v1/index.json`.
 2. Read `companyShards["中"]`, which identifies the shard.
 3. GET that shard URL relative to the API base.
 4. Read `data["中聯油脂股份有限公司"]`.

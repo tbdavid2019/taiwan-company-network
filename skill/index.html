@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Agent Skill - 888台灣的公司關係網</title>
   <meta name="description" content="給 LLM 使用的 Taiwan Company Network Skill 與公開 GET API 操作手冊。">
-  <link rel="canonical" href="https://tbdavid2019.github.io/taiwan-company-network/skill">
+  <link rel="canonical" href="https://taiwan-company-network.david888.com/skill">
   <style>body{margin:0;background:#f7f6f3;color:#171717;font:15px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace}.wrap{max-width:1000px;margin:auto;padding:32px 20px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}h1{font:700 26px/1.2 system-ui,sans-serif;margin:0}.actions{display:flex;gap:10px}a{color:#155eef}.button{border:1px solid #d6d3d1;border-radius:8px;background:white;padding:9px 13px;text-decoration:none;color:#171717}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#07111f;color:#e5edf8;border-radius:12px;padding:24px;overflow:auto;box-shadow:0 8px 24px #00000012}@media(max-width:640px){.top{align-items:flex-start;flex-direction:column}.wrap{padding:20px 12px}pre{padding:16px;font-size:12px}}</style>
 </head>
-<body><main class="wrap"><div class="top"><div><h1>Taiwan Company Network Skill</h1><div>給其他 LLM 使用的公開 GET API 操作手冊</div></div><div class="actions"><a class="button" download="SKILL.md" href="https://tbdavid2019.github.io/taiwan-company-network/skills/taiwan-company-network/SKILL.md">下載 SKILL.md</a><a class="button" href="https://tbdavid2019.github.io/taiwan-company-network/">回網站</a></div></div><pre><code>---
+<body><main class="wrap"><div class="top"><div><h1>Taiwan Company Network Skill</h1><div>給其他 LLM 使用的公開 GET API 操作手冊</div></div><div class="actions"><a class="button" download="SKILL.md" href="https://taiwan-company-network.david888.com/skills/taiwan-company-network/SKILL.md">下載 SKILL.md</a><a class="button" href="https://taiwan-company-network.david888.com/">回網站</a></div></div><pre><code>---
 name: taiwan-company-network
 description: Queries the public read-only Taiwan Company Network API for company registration summaries, stock-code aliases, and direct relationship-index links. Use when an agent needs to find a Taiwan company by registered name or TWSE/TPEx stock code, inspect its basic data, enumerate upstream or downstream entities, or provide its interactive graph URL.
 ---
@@ -19,7 +19,7 @@ description: Queries the public read-only Taiwan Company Network API for company
 
 Use only HTTP GET requests against:
 
-`https://tbdavid2019.github.io/taiwan-company-network/api/v1/`
+`https://taiwan-company-network.david888.com/api/v1/`
 
 No authentication is required. Do not attempt POST, PUT, PATCH, DELETE, MCP, or local server connections.
 
@@ -38,7 +38,7 @@ No authentication is required. Do not attempt POST, PUT, PATCH, DELETE, MCP, or 
 
 For 中聯油脂股份有限公司:
 
-1. GET `https://tbdavid2019.github.io/taiwan-company-network/api/v1/index.json`.
+1. GET `https://taiwan-company-network.david888.com/api/v1/index.json`.
 2. Read `companyShards["中"]`, which identifies the shard.
 3. GET that shard URL relative to the API base.
 4. Read `data["中聯油脂股份有限公司"]`.
