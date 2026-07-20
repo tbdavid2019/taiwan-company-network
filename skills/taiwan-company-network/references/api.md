@@ -1,12 +1,6 @@
 # API reference
 
-Start the local read-only service from the repository:
-
-```bash
-npm run api
-```
-
-Default base URL: `http://127.0.0.1:8787/api/v1`
+The REST and MCP contracts are implemented in the source repository. Do not call them until a public remote base URL is configured by the service operator.
 
 ## Endpoints
 
@@ -16,8 +10,6 @@ Default base URL: `http://127.0.0.1:8787/api/v1`
 - `GET /health`
 
 Encode registered names as URL path segments. `direction` accepts `both`, `upstream`, or `downstream`. List responses contain `data` and `pagination`; errors always use `{ "error": { "code", "message", "details"? } }`.
-
-The stateless Streamable HTTP MCP endpoint is `POST http://127.0.0.1:8787/mcp`. For a local stdio MCP process, run `npm run mcp`.
 
 Full OpenAPI document: `https://tbdavid2019.github.io/taiwan-company-network/openapi.json`
 

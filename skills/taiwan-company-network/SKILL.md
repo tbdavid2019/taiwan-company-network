@@ -13,9 +13,9 @@ description: Searches Taiwan company registration summaries and direct relations
 4. Cite the returned `webUrl` when the user would benefit from the interactive graph.
 5. State that relationship links come from the project's relationship index and are not independently verified ownership or investment claims.
 
-## Tool fallback
+## Tool availability
 
-Prefer the three MCP tools above. If they are unavailable but the repository is local, run `npm run api` in the repository and use the REST endpoints documented in [references/api.md](references/api.md). Do not download or parse the complete 46–69 MB data files inside the model context.
+Prefer the three MCP tools above. If they are unavailable, state that the remote tool connection is not configured and provide the interactive website link instead. Do not claim that a tool call succeeded, and do not download the complete 46–69 MB data files into the model context.
 
 ## Response guidance
 
