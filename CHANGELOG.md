@@ -19,6 +19,9 @@ All notable changes to this project are documented in this file.
 - Fixed the custom-domain deployment to build from `/`, restoring React assets, company routes, Skill URLs, and API URLs on `taiwan-company-network.david888.com`.
 - Added a single-pass 404 route repair for legacy project-path and corrupted `~and~` graph URLs.
 - Added bilingual AI-agent installation instructions with required files, public API verification, GET-only constraints, and explicit completion criteria.
+- Corrected page titles, descriptions, structured data, and social-preview copy so they describe company registration fields and company/legal-entity relationship indexes without claiming director relationship exploration.
+- Added PNG graph sharing: supported mobile browsers open the system share sheet; other browsers download the generated image.
+- Added a data-semantics notice to graph cards and exported images to avoid implying verified ownership, control, or investment relationships.
 
 ## 2026-07-19
 

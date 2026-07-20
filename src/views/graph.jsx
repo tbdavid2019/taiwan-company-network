@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Graph } from "@antv/g6";
+import { toBlob } from "html-to-image";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowDownLeft,
@@ -13,6 +14,7 @@ import {
   Network,
   Plus,
   RefreshCw,
+  Share2,
   UserRound,
 } from "lucide-react";
 
@@ -22,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { loadCompanyDetails, loadGraph } from "@/lib/companyData";
+import { graphShareFileName } from "@/lib/graphShare";
 import { calculatePinchViewport, clampZoom, companyPageTitle } from "@/lib/graphViewport";
 import { useCompany } from "context/CompanyContext";
 
@@ -364,6 +367,8 @@ function NetworkGraph() {
   const [searchParams] = useSearchParams();
   const { rememberCompany, setCompanyDetails, setSelectedCompany } = useCompany();
   const graphContainerRef = useRef(null);
+  const graphShareRef = useRef(null);
+  const preparedShareRef = useRef(null);
   const graphRef = useRef(null);
   const [network, setNetwork] = useState({});
   const [details, setDetails] = useState({});
@@ -375,6 +380,8 @@ function NetworkGraph() {
   const [localZoom, setLocalZoom] = useState(1);
   const [localMapResetKey, setLocalMapResetKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareMessage, setShareMessage] = useState("");
   const [error, setError] = useState("");
   const requestedCompany = searchParams.get("company") || location.state?.company;
 
@@ -403,6 +410,8 @@ function NetworkGraph() {
     setExpandedNodes(new Set());
     setLocalZoom(1);
     setActiveNode("");
+    preparedShareRef.current = null;
+    setShareMessage("");
   }, [company, mode]);
 
   useEffect(() => {
@@ -420,6 +429,12 @@ function NetworkGraph() {
     () => makeGraphData(network, company, mode, details, expandedNodes),
     [company, details, expandedNodes, mode, network],
   );
+
+  useEffect(() => {
+    preparedShareRef.current = null;
+    setShareMessage("");
+  }, [graphData]);
+
   const currentView = VIEW_OPTIONS.find((option) => option.id === mode);
   const useLocalRelationshipMap = graphData.nodes.length <= 80;
   const toggleExpandedNode = useCallback((id) => {
@@ -531,15 +546,86 @@ function NetworkGraph() {
     requestAnimationFrame(() => graphRef.current?.fitView({ padding: 72 }, { duration: 220 }));
   };
 
+  const downloadGraphImage = (blob) => {
+    const imageUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = imageUrl;
+    link.download = graphShareFileName(company);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(imageUrl);
+    setShareMessage("關係圖 PNG 已下載。");
+  };
+
+  const sharePreparedImage = async ({ blob, file }) => {
+    const shareData = {
+      files: [file],
+      title: `${company} - 888台灣的公司關係網`,
+      text: `${company} 的公司與法人關係索引\n${window.location.href}`,
+    };
+
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      await navigator.share(shareData);
+      setShareMessage("已開啟系統分享選單。");
+      return;
+    }
+
+    downloadGraphImage(blob);
+  };
+
+  const shareGraph = async () => {
+    if (isSharing) return;
+    setShareMessage("");
+
+    if (preparedShareRef.current) {
+      try {
+        await sharePreparedImage(preparedShareRef.current);
+      } catch (shareError) {
+        if (shareError?.name !== "AbortError") setShareMessage("分享未開啟；請再按一次分享，或改用下載的 PNG。");
+      }
+      return;
+    }
+
+    if (!graphShareRef.current) return;
+    setIsSharing(true);
+    setHoveredNode("");
+
+    try {
+      await document.fonts?.ready;
+      const blob = await toBlob(graphShareRef.current, {
+        backgroundColor: "#faf8f5",
+        cacheBust: true,
+        filter: (node) => node?.dataset?.shareExclude !== "true",
+        pixelRatio: Math.min(2, Math.max(1.5, window.devicePixelRatio || 1)),
+      });
+      if (!blob) throw new Error("Unable to create graph image.");
+
+      const file = new File([blob], graphShareFileName(company), { type: "image/png" });
+      preparedShareRef.current = { blob, file };
+      await sharePreparedImage({ blob, file });
+    } catch (shareError) {
+      if (shareError?.name === "AbortError") return;
+      if (preparedShareRef.current && shareError?.name === "NotAllowedError") {
+        setShareMessage("圖片已產生，請再按一次「分享圖片」開啟系統分享選單。");
+      } else {
+        setShareMessage("無法產生分享圖片，請稍後再試。");
+      }
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   if (isLoading) return <div className="flex min-h-[70vh] flex-col items-center justify-center gap-3 text-muted-foreground"><LoaderCircle className="size-8 animate-spin text-primary" /><p className="text-sm">Loading relationship data…</p></div>;
   if (error) return <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-6 text-sm text-destructive">{error}</div>;
 
   return (
     <div className="fade-in">
-      <Header actions={<Button onClick={() => navigate("/index")} variant="outline"><ArrowLeft />Back to index</Button>} title={company || "Relationship graph"} />
+      <Header actions={<div className="flex flex-wrap gap-2"><Button onClick={() => navigate("/index")} variant="outline"><ArrowLeft />Back to index</Button><Button disabled={isSharing} onClick={shareGraph}><Share2 />{isSharing ? "產生圖片…" : preparedShareRef.current ? "分享圖片" : "分享"}</Button></div>} title={company || "Relationship graph"} />
+      {shareMessage && <p aria-live="polite" className="mb-3 text-right text-xs text-muted-foreground">{shareMessage}</p>}
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
-        <Card className="min-w-0 overflow-hidden">
-          <CardHeader className="border-b border-border/70 bg-muted/20 px-5 py-4 sm:px-6"><div className="mb-4 flex flex-wrap gap-2">{VIEW_OPTIONS.map((option) => { const Icon = option.icon; const active = option.id === mode; return <Button className="gap-2" key={option.id} onClick={() => setMode(option.id)} size="sm" variant={active ? "default" : "outline"}><Icon className="size-3.5" />{option.label}</Button>; })}</div><div className="flex flex-wrap items-center justify-between gap-3"><div><CardTitle className="flex items-center gap-2 text-base"><Network className="size-4 text-primary" />{currentView?.label}</CardTitle><p className="mt-1 text-xs text-muted-foreground">{graphData.nodes.length} nodes · {graphData.edges.length} links</p></div><Badge className="hidden sm:inline-flex" variant="outline">{currentView?.hint}</Badge></div></CardHeader>
+        <Card className="min-w-0 overflow-hidden" ref={graphShareRef}>
+          <CardHeader className="border-b border-border/70 bg-muted/20 px-5 py-4 sm:px-6"><div className="mb-4 flex flex-wrap gap-2" data-share-exclude="true">{VIEW_OPTIONS.map((option) => { const Icon = option.icon; const active = option.id === mode; return <Button className="gap-2" key={option.id} onClick={() => setMode(option.id)} size="sm" variant={active ? "default" : "outline"}><Icon className="size-3.5" />{option.label}</Button>; })}</div><div className="flex flex-wrap items-center justify-between gap-3"><div><CardTitle className="flex items-center gap-2 text-base"><Network className="size-4 text-primary" />{company} · {currentView?.label}</CardTitle><p className="mt-1 text-xs text-muted-foreground">{graphData.nodes.length} nodes · {graphData.edges.length} links</p></div><Badge className="hidden sm:inline-flex" variant="outline">{currentView?.hint}</Badge></div></CardHeader>
           <CardContent className="p-0"><div className="relative h-[560px] w-full overflow-hidden bg-[#faf8f5] md:h-[640px]" ref={graphContainerRef}>
             {useLocalRelationshipMap && graphData.edges.length > 0 && (
               <div className="absolute inset-0 z-[1] p-3 sm:p-8">
@@ -562,11 +648,12 @@ function NetworkGraph() {
                 </div>
               </div>
             )}
-            {hoveredNode && <div className="pointer-events-none absolute right-4 top-4 z-10 w-[min(22rem,calc(100%-2rem))] rounded-xl border border-border/80 bg-background/95 p-4 shadow-xl backdrop-blur"><EntityDetails details={details} name={hoveredNode} /></div>}
-            {useLocalRelationshipMap && graphData.edges.length > 0 && <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-md border border-border/70 bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur sm:hidden">拖曳移動 · 雙指縮放</div>}
+            {hoveredNode && <div className="pointer-events-none absolute right-4 top-4 z-10 w-[min(22rem,calc(100%-2rem))] rounded-xl border border-border/80 bg-background/95 p-4 shadow-xl backdrop-blur" data-share-exclude="true"><EntityDetails details={details} name={hoveredNode} /></div>}
+            {useLocalRelationshipMap && graphData.edges.length > 0 && <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-md border border-border/70 bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur sm:hidden" data-share-exclude="true">拖曳移動 · 雙指縮放</div>}
             <div className="absolute bottom-4 left-4 z-10 hidden items-center gap-2 rounded-lg border border-border/70 bg-[#fffdf9]/95 px-3 py-2 text-[11px] text-muted-foreground shadow-sm backdrop-blur sm:flex"><span className="size-2 rounded-full bg-[#d97757]" /> Focus <span className="size-2 rounded-full bg-[#2f7d6d]" /> Company <span className="size-2 rounded-full bg-[#877666]" /> Entity <span>· 拖曳空白處移動畫布、雙指縮放</span> {expandedNodes.size > 0 && <span>· {expandedNodes.size} expanded</span>}</div>
-            <div className="absolute bottom-4 right-4 z-10 flex gap-1 rounded-lg border border-border/70 bg-background/90 p-1 shadow-sm backdrop-blur"><Button aria-label="Zoom out" onClick={() => zoom(0.8)} size="icon" variant="ghost"><Minus /></Button><Button aria-label="Reset graph expansion" onClick={resetGraph} size="icon" variant="ghost"><RefreshCw /></Button><Button aria-label="Zoom in" onClick={() => zoom(1.2)} size="icon" variant="ghost"><Plus /></Button></div>
+            <div className="absolute bottom-4 right-4 z-10 flex gap-1 rounded-lg border border-border/70 bg-background/90 p-1 shadow-sm backdrop-blur" data-share-exclude="true"><Button aria-label="Zoom out" onClick={() => zoom(0.8)} size="icon" variant="ghost"><Minus /></Button><Button aria-label="Reset graph expansion" onClick={resetGraph} size="icon" variant="ghost"><RefreshCw /></Button><Button aria-label="Zoom in" onClick={() => zoom(1.2)} size="icon" variant="ghost"><Plus /></Button></div>
           </div></CardContent>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 bg-[#fffdf9] px-5 py-3 text-[11px] text-muted-foreground"><span>資料為公司／法人關係索引，不代表已驗證持股、控制或投資關係。</span><span>taiwan-company-network.david888.com</span></div>
         </Card>
         <aside className="space-y-5">
           {activeNode && activeNodeConnections && <Card><CardHeader className="px-5 pb-3 pt-5"><CardTitle className="text-sm">Expanded entity</CardTitle><p className="text-xs leading-5 text-muted-foreground">Entities opened from the node you last clicked.</p></CardHeader><CardContent className="space-y-4 px-5 pb-5"><EntityDetails details={details} name={activeNode} /><Separator /><ExpansionEntityList icon={ArrowDownLeft} label="Upstream entities" names={activeNodeConnections.incoming} tone="text-blue-600" /><ExpansionEntityList icon={ArrowUpRight} label="Downstream entities" names={activeNodeConnections.outgoing} tone="text-teal-700" /></CardContent></Card>}

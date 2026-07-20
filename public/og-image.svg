@@ -29,7 +29,7 @@
     </g>
 
     <text x="72" y="230" fill="#111827" font-size="56" font-weight="800">探索臺灣公司的關係脈絡</text>
-    <text x="72" y="286" fill="#475569" font-size="25">從公司登記資料，看見法人、代表人與董監事之間的連結</text>
+    <text x="72" y="286" fill="#475569" font-size="25">查詢公司登記資料，探索公司與法人之間的關係索引</text>
 
     <g transform="translate(850 322)" filter="url(#shadow)">
       <path d="M0 0-145-90M0 0 155-84M0 0-132 110M0 0 148 118" fill="none" marker-end="url(#arrow)" stroke="#b7aba0" stroke-width="4"/>
