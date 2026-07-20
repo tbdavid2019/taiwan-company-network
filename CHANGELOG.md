@@ -14,6 +14,11 @@ All notable changes to this project are documented in this file.
 - Added complete search and social metadata, canonical URL, Open Graph and Twitter Card tags, JSON-LD structured data, static crawler-visible H1 content, SVG/32px favicons, and a 1200×630 social preview image.
 - Added a public GET-only static company API and an Agent Skill that teaches LLMs how to resolve company shards, stock-code aliases, details, and relationships.
 - Added an in-site Skill page with readable instructions plus copy and download actions.
+- Documented that Agent Skill consumers receive structured JSON company data and interactive graph URLs, not PNG or SVG output.
+- Removed the MCP and local dynamic API implementation; the supported integration surface is now the public GET-only static JSON API.
+- Fixed the custom-domain deployment to build from `/`, restoring React assets, company routes, Skill URLs, and API URLs on `taiwan-company-network.david888.com`.
+- Added a single-pass 404 route repair for legacy project-path and corrupted `~and~` graph URLs.
+- Added bilingual AI-agent installation instructions with required files, public API verification, GET-only constraints, and explicit completion criteria.
 
 ## 2026-07-19
 
