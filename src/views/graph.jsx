@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { loadCompanyDetails, loadGraph } from "@/lib/companyData";
-import { nodeSelectedOnPointerEnd } from "@/lib/graphInteraction";
+import { nodeSelectedOnPointerEnd, pointerMovementExceedsThreshold } from "@/lib/graphInteraction";
 import { graphShareFileName, graphShareText } from "@/lib/graphShare";
 import { calculatePinchViewport, clampZoom, companyPageTitle } from "@/lib/graphViewport";
 import { useCompany } from "context/CompanyContext";
@@ -223,7 +223,13 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
 
     if (pointersRef.current.size === 1) {
       if (nodeId) {
-        dragRef.current = { id: nodeId, point: graphPosition(point), origin: positions.get(nodeId), moved: false };
+        dragRef.current = {
+          id: nodeId,
+          point: graphPosition(point),
+          pointerStart: { x: event.clientX, y: event.clientY },
+          origin: positions.get(nodeId),
+          moved: false,
+        };
       } else {
         gestureRef.current = { type: "pan", point, origin: panRef.current, moved: false };
       }
@@ -267,10 +273,14 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
 
     const drag = dragRef.current;
     if (drag) {
+      if (!drag.moved && !pointerMovementExceedsThreshold({
+        current: { x: event.clientX, y: event.clientY },
+        start: drag.pointerStart,
+      })) return;
+      drag.moved = true;
       const point = graphPosition(viewportPoint);
       const deltaX = point.x - drag.point.x;
       const deltaY = point.y - drag.point.y;
-      if (Math.hypot(deltaX, deltaY) > 2) drag.moved = true;
       setDraggedPositions((current) => ({ ...current, [drag.id]: { x: drag.origin.x + deltaX, y: drag.origin.y + deltaY } }));
       return;
     }

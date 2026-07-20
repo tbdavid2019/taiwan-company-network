@@ -1,7 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { nodeSelectedOnPointerEnd } from "./graphInteraction.js";
+import { nodeSelectedOnPointerEnd, pointerMovementExceedsThreshold } from "./graphInteraction.js";
+
+test("pointerMovementExceedsThreshold treats small pointer jitter as a click", () => {
+  assert.equal(pointerMovementExceedsThreshold({
+    current: { x: 104, y: 103 },
+    start: { x: 100, y: 100 },
+  }), false);
+  assert.equal(pointerMovementExceedsThreshold({
+    current: { x: 107, y: 100 },
+    start: { x: 100, y: 100 },
+  }), true);
+});
 
 test("nodeSelectedOnPointerEnd selects a tapped node even when the SVG owns pointer capture", () => {
   assert.equal(nodeSelectedOnPointerEnd({
