@@ -22,6 +22,7 @@ All notable changes to this project are documented in this file.
 - Corrected page titles, descriptions, structured data, and social-preview copy so they describe company registration fields and company/legal-entity relationship indexes without claiming director relationship exploration.
 - Added PNG graph sharing: supported mobile browsers open the system share sheet; other browsers download the generated image.
 - Added a data-semantics notice to graph cards and exported images to avoid implying verified ownership, control, or investment relationships.
+- Fixed social sharing on Threads and X by excluding the page URL from file-share text, preventing an OG preview from appearing beside the generated PNG.
 
 ## 2026-07-19
 

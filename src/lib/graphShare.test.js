@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { graphShareFileName } from "./graphShare.js";
+import { graphShareFileName, graphShareText } from "./graphShare.js";
 
 test("graphShareFileName uses the selected company", () => {
   assert.equal(
@@ -19,4 +19,10 @@ test("graphShareFileName removes characters that are invalid in filenames", () =
 
 test("graphShareFileName has a stable fallback", () => {
   assert.equal(graphShareFileName(""), "888台灣公司關係網-公司關係圖.png");
+});
+
+test("graphShareText does not include a URL that social apps can expand into a second image", () => {
+  const text = graphShareText("聯華實業控股股份有限公司");
+  assert.equal(text, "聯華實業控股股份有限公司的公司與法人關係索引");
+  assert.doesNotMatch(text, /https?:\/\//);
 });

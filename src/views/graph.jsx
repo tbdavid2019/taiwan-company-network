@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { loadCompanyDetails, loadGraph } from "@/lib/companyData";
-import { graphShareFileName } from "@/lib/graphShare";
+import { graphShareFileName, graphShareText } from "@/lib/graphShare";
 import { calculatePinchViewport, clampZoom, companyPageTitle } from "@/lib/graphViewport";
 import { useCompany } from "context/CompanyContext";
 
@@ -562,7 +562,7 @@ function NetworkGraph() {
     const shareData = {
       files: [file],
       title: `${company} - 888台灣的公司關係網`,
-      text: `${company} 的公司與法人關係索引\n${window.location.href}`,
+      text: graphShareText(company),
     };
 
     if (navigator.share && navigator.canShare?.({ files: [file] })) {

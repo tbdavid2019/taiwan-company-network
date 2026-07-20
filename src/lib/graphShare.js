@@ -8,3 +8,7 @@ export function graphShareFileName(company) {
 
   return `${safeCompany || "888台灣公司關係網"}-公司關係圖.png`;
 }
+
+export function graphShareText(company) {
+  return `${String(company || "888台灣公司關係網").trim()}的公司與法人關係索引`;
+}
