@@ -1,6 +1,7 @@
 {
   "name": "taiwan-company-network",
   "version": "2.0.0",
+  "type": "module",
   "description": "Modern React explorer for Taiwan company relationships",
   "private": false,
   "repository": {
@@ -24,6 +25,9 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
+    "test": "node --test",
+    "api": "node server/index.js",
+    "mcp": "node server/stdio.js",
     "build": "vite build --base=/taiwan-company-network/",
     "preview": "vite preview",
     "generate:aliases": "node scripts/build-company-aliases.mjs",
@@ -40,14 +44,17 @@
     "@antv/g6": "^5.1.1",
     "@base-ui/react": "^1.6.0",
     "@fontsource-variable/geist": "^5.2.9",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "express": "^5.2.1",
     "lucide-react": "^1.25.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^6.22.0",
     "tailwind-merge": "^3.6.0",
-    "tw-animate-css": "^1.4.0"
+    "tw-animate-css": "^1.4.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -56,6 +63,7 @@
     "@vitejs/plugin-react": "^6.0.3",
     "gh-pages": "^6.3.0",
     "shadcn": "^4.13.1",
+    "supertest": "^7.2.2",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "vite": "^8.1.5"

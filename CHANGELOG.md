@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-07-20
+
+- Added company-specific browser titles in the format `{company} - 888台灣的公司關係網`.
+- Added mobile graph gestures: drag nodes, pan the canvas with one pointer, and pinch to zoom around the gesture midpoint.
+- Added a low-opacity, repeating `DAVID888` SVG text watermark behind graph nodes and links.
+- Installed Google Analytics with measurement ID `G-VSJ3K6F4BF`.
+- Added desktop and mobile relationship-map screenshots to the README.
+- Added unit coverage for page-title generation and graph viewport zoom calculations.
+- Updated compatible transitive dependencies to resolve the current npm security advisories.
+- Added complete search and social metadata, canonical URL, Open Graph and Twitter Card tags, JSON-LD structured data, static crawler-visible H1 content, SVG/32px favicons, and a 1200×630 social preview image.
+- Added a read-only Taiwan company REST API, MCP server with search/detail/relationship tools, and a public Agent Skill linked from the site footer.
+
 ## 2026-07-19
 
 - Simplified the relationship controls from six two-hop permutations to three useful views: all direct relationships, upstream, and downstream. Small relationship maps now use a deterministic SVG fallback so focus companies such as TSMC remain visible with their direct links; large expansions continue to use G6.

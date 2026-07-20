@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { loadCompanyDetails, loadGraph } from "@/lib/companyData";
+import { calculatePinchViewport, clampZoom, companyPageTitle } from "@/lib/graphViewport";
 import { useCompany } from "context/CompanyContext";
 
 const VIEW_OPTIONS = [
@@ -141,7 +142,7 @@ function ExpansionEntityList({ icon: Icon, label, names, tone }) {
   );
 }
 
-function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
+function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zoom }) {
   const width = 1200;
   const height = 720;
   const center = { x: width / 2, y: height / 2 };
@@ -150,8 +151,13 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
   const nodesById = new Map(data.nodes.map((node) => [node.id, node]));
   const svgRef = useRef(null);
   const dragRef = useRef(null);
+  const gestureRef = useRef(null);
+  const pointersRef = useRef(new Map());
   const didDragRef = useRef(false);
   const [draggedPositions, setDraggedPositions] = useState({});
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const panRef = useRef(pan);
+  const zoomRef = useRef(zoom);
   const defaultPositions = new Map([[root?.id, center]]);
 
   const ringCapacities = [10, 20, 32, 48];
@@ -171,7 +177,12 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
     });
   });
 
-  useEffect(() => setDraggedPositions({}), [root?.id]);
+  useEffect(() => {
+    setDraggedPositions({});
+    setPan({ x: 0, y: 0 });
+  }, [root?.id]);
+  useEffect(() => { panRef.current = pan; }, [pan]);
+  useEffect(() => { zoomRef.current = zoom; }, [zoom]);
 
   const positions = new Map(defaultPositions);
   Object.entries(draggedPositions).forEach(([id, position]) => {
@@ -184,7 +195,7 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
   const maxY = Math.max(...defaultPoints.map((point) => point.y)) + 100;
   const viewBox = { x: minX, y: minY, width: Math.max(260, maxX - minX), height: Math.max(220, maxY - minY) };
 
-  const pointerPosition = (event) => {
+  const viewportPosition = (event) => {
     const rect = svgRef.current?.getBoundingClientRect();
     if (!rect) return null;
     return {
@@ -192,36 +203,112 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
       y: viewBox.y + ((event.clientY - rect.top) / rect.height) * viewBox.height,
     };
   };
-  const startDrag = (event, id) => {
-    if (event.button !== 0) return;
-    const point = pointerPosition(event);
+  const graphPosition = (point) => ({
+    x: center.x + (point.x - center.x - panRef.current.x) / zoomRef.current,
+    y: center.y + (point.y - center.y - panRef.current.y) / zoomRef.current,
+  });
+  const pointerPair = () => [...pointersRef.current.values()].slice(0, 2);
+  const distance = ([first, second]) => Math.hypot(second.x - first.x, second.y - first.y);
+  const midpoint = ([first, second]) => ({ x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 });
+  const startPointer = (event) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    const point = viewportPosition(event);
     if (!point) return;
-    dragRef.current = { id, point, origin: positions.get(id), moved: false };
-  };
-  const moveDrag = (event) => {
-    const drag = dragRef.current;
-    const point = pointerPosition(event);
-    if (!drag || !point) return;
-    const deltaX = point.x - drag.point.x;
-    const deltaY = point.y - drag.point.y;
-    if (Math.hypot(deltaX, deltaY) > 2) drag.moved = true;
-    setDraggedPositions((current) => ({ ...current, [drag.id]: { x: drag.origin.x + deltaX, y: drag.origin.y + deltaY } }));
-  };
-  const endDrag = () => {
-    if (!dragRef.current) return;
-    didDragRef.current = dragRef.current.moved;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    pointersRef.current.set(event.pointerId, point);
+    const nodeId = event.target.closest?.("[data-node-id]")?.dataset.nodeId;
+
+    if (pointersRef.current.size === 1) {
+      if (nodeId) {
+        dragRef.current = { id: nodeId, point: graphPosition(point), origin: positions.get(nodeId), moved: false };
+      } else {
+        gestureRef.current = { type: "pan", point, origin: panRef.current, moved: false };
+      }
+      return;
+    }
+
+    const pair = pointerPair();
     dragRef.current = null;
+    gestureRef.current = {
+      type: "pinch",
+      startDistance: distance(pair),
+      startMidpoint: midpoint(pair),
+      startPan: panRef.current,
+      startZoom: zoomRef.current,
+      moved: true,
+    };
+  };
+  const movePointer = (event) => {
+    if (!pointersRef.current.has(event.pointerId)) return;
+    const viewportPoint = viewportPosition(event);
+    if (!viewportPoint) return;
+    pointersRef.current.set(event.pointerId, viewportPoint);
+
+    if (pointersRef.current.size >= 2 && gestureRef.current?.type === "pinch") {
+      const pair = pointerPair();
+      const nextViewport = calculatePinchViewport({
+        center,
+        currentDistance: distance(pair),
+        currentMidpoint: midpoint(pair),
+        startDistance: gestureRef.current.startDistance,
+        startMidpoint: gestureRef.current.startMidpoint,
+        startPan: gestureRef.current.startPan,
+        startZoom: gestureRef.current.startZoom,
+      });
+      panRef.current = nextViewport.pan;
+      zoomRef.current = nextViewport.zoom;
+      setPan(nextViewport.pan);
+      onZoomChange(nextViewport.zoom);
+      didDragRef.current = true;
+      return;
+    }
+
+    const drag = dragRef.current;
+    if (drag) {
+      const point = graphPosition(viewportPoint);
+      const deltaX = point.x - drag.point.x;
+      const deltaY = point.y - drag.point.y;
+      if (Math.hypot(deltaX, deltaY) > 2) drag.moved = true;
+      setDraggedPositions((current) => ({ ...current, [drag.id]: { x: drag.origin.x + deltaX, y: drag.origin.y + deltaY } }));
+      return;
+    }
+
+    const gesture = gestureRef.current;
+    if (gesture?.type !== "pan") return;
+    const deltaX = viewportPoint.x - gesture.point.x;
+    const deltaY = viewportPoint.y - gesture.point.y;
+    if (Math.hypot(deltaX, deltaY) > 2) gesture.moved = true;
+    const nextPan = { x: gesture.origin.x + deltaX, y: gesture.origin.y + deltaY };
+    panRef.current = nextPan;
+    setPan(nextPan);
+  };
+  const endPointer = (event) => {
+    pointersRef.current.delete(event.pointerId);
+    if (dragRef.current?.moved || gestureRef.current?.moved) didDragRef.current = true;
+    dragRef.current = null;
+
+    if (pointersRef.current.size === 1) {
+      const point = [...pointersRef.current.values()][0];
+      gestureRef.current = { type: "pan", point, origin: panRef.current, moved: true };
+      return;
+    }
+
+    gestureRef.current = null;
     window.setTimeout(() => { didDragRef.current = false; }, 0);
   };
 
   return (
-    <svg aria-label="Company relationship graph" className="h-full w-full" onPointerMove={moveDrag} onPointerUp={endDrag} onPointerLeave={endDrag} ref={svgRef} role="img" style={{ touchAction: "none" }} viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}>
+    <svg aria-label="Company relationship graph" className="h-full w-full cursor-grab active:cursor-grabbing" onPointerCancel={endPointer} onPointerDown={startPointer} onPointerMove={movePointer} onPointerUp={endPointer} ref={svgRef} role="img" style={{ touchAction: "none" }} viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}>
       <defs>
         <marker id="relationship-arrow" markerHeight="10" markerUnits="userSpaceOnUse" markerWidth="10" orient="auto" refX="9" refY="5">
           <path d="M0,0 L10,5 L0,10 Z" fill="#786f66" />
         </marker>
+        <pattern id="david888-watermark" height="120" patternTransform="rotate(-18)" patternUnits="userSpaceOnUse" width="210">
+          <text fill="#6f6258" fillOpacity="0.06" fontFamily="Geist Variable, sans-serif" fontSize="22" fontWeight="700" letterSpacing="3" x="18" y="64">DAVID888</text>
+        </pattern>
       </defs>
-      <g transform={`translate(${center.x} ${center.y}) scale(${zoom}) translate(${-center.x} ${-center.y})`}>
+      <rect aria-hidden="true" fill="url(#david888-watermark)" height={viewBox.height} width={viewBox.width} x={viewBox.x} y={viewBox.y} />
+      <g transform={`translate(${pan.x} ${pan.y}) translate(${center.x} ${center.y}) scale(${zoom}) translate(${-center.x} ${-center.y})`}>
       {data.edges.map((edge) => {
         const source = positions.get(edge.source);
         const target = positions.get(edge.target);
@@ -246,11 +333,11 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, zoom }) {
         return (
           <g
             className="cursor-grab active:cursor-grabbing"
+            data-node-id={node.id}
             key={node.id}
             onClick={() => { if (!didDragRef.current) onNodeClick(node.id); }}
             onMouseEnter={() => onNodeHover(node.id)}
             onMouseLeave={() => onNodeHover("")}
-            onPointerDown={(event) => startDrag(event, node.id)}
           >
             {isRoot && <circle cx={position.x} cy={position.y} fill="#f3d3c7" r="34" />}
             <circle cx={position.x} cy={position.y} fill={fill} r={nodeRadius} stroke="#fff" strokeWidth="3" />
@@ -286,6 +373,7 @@ function NetworkGraph() {
   const [hoveredNode, setHoveredNode] = useState("");
   const [activeNode, setActiveNode] = useState("");
   const [localZoom, setLocalZoom] = useState(1);
+  const [localMapResetKey, setLocalMapResetKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const requestedCompany = searchParams.get("company") || location.state?.company;
@@ -322,6 +410,11 @@ function NetworkGraph() {
     setCompanyDetails(company ? details[company] || null : null);
     if (company) rememberCompany(company, details[company] || null);
   }, [company, details, rememberCompany, setCompanyDetails, setSelectedCompany]);
+
+  useEffect(() => {
+    document.title = companyPageTitle(company || requestedCompany);
+    return () => { document.title = companyPageTitle(""); };
+  }, [company, requestedCompany]);
 
   const graphData = useMemo(
     () => makeGraphData(network, company, mode, details, expandedNodes),
@@ -425,7 +518,7 @@ function NetworkGraph() {
 
   const zoom = (factor) => {
     if (useLocalRelationshipMap) {
-      setLocalZoom((current) => Math.min(2.4, Math.max(0.65, current * factor)));
+      setLocalZoom((current) => clampZoom(current * factor));
       return;
     }
     graphRef.current?.zoomBy(factor, { duration: 180 });
@@ -434,6 +527,7 @@ function NetworkGraph() {
     setHoveredNode("");
     setExpandedNodes(new Set());
     setLocalZoom(1);
+    setLocalMapResetKey((current) => current + 1);
     requestAnimationFrame(() => graphRef.current?.fitView({ padding: 72 }, { duration: 220 }));
   };
 
@@ -445,14 +539,16 @@ function NetworkGraph() {
       <Header actions={<Button onClick={() => navigate("/index")} variant="outline"><ArrowLeft />Back to index</Button>} title={company || "Relationship graph"} />
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <Card className="min-w-0 overflow-hidden">
-          <CardHeader className="border-b border-border/70 bg-muted/20 px-5 py-4 sm:px-6"><div className="mb-4 flex flex-wrap gap-2">{VIEW_OPTIONS.map((option) => { const Icon = option.icon; const active = option.id === mode; return <Button className="gap-2" key={option.id} onClick={() => setMode(option.id)} size="sm" variant={active ? "default" : "outline"}><Icon className="size-3.5" />{option.label}</Button>; })}</div><div className="flex flex-wrap items-center justify-between gap-3"><div><CardTitle className="flex items-center gap-2 text-base"><Network className="size-4 text-primary" />{currentView?.label}</CardTitle><p className="mt-1 text-xs text-muted-foreground">{graphData.nodes.length} nodes · {graphData.edges.length} links</p></div><Badge variant="outline">{currentView?.hint}</Badge></div></CardHeader>
+          <CardHeader className="border-b border-border/70 bg-muted/20 px-5 py-4 sm:px-6"><div className="mb-4 flex flex-wrap gap-2">{VIEW_OPTIONS.map((option) => { const Icon = option.icon; const active = option.id === mode; return <Button className="gap-2" key={option.id} onClick={() => setMode(option.id)} size="sm" variant={active ? "default" : "outline"}><Icon className="size-3.5" />{option.label}</Button>; })}</div><div className="flex flex-wrap items-center justify-between gap-3"><div><CardTitle className="flex items-center gap-2 text-base"><Network className="size-4 text-primary" />{currentView?.label}</CardTitle><p className="mt-1 text-xs text-muted-foreground">{graphData.nodes.length} nodes · {graphData.edges.length} links</p></div><Badge className="hidden sm:inline-flex" variant="outline">{currentView?.hint}</Badge></div></CardHeader>
           <CardContent className="p-0"><div className="relative h-[560px] w-full overflow-hidden bg-[#faf8f5] md:h-[640px]" ref={graphContainerRef}>
             {useLocalRelationshipMap && graphData.edges.length > 0 && (
-              <div className="absolute inset-0 z-[1] p-8">
+              <div className="absolute inset-0 z-[1] p-3 sm:p-8">
                 <LocalRelationshipMap
                   data={graphData}
+                  key={`${company}-${mode}-${localMapResetKey}`}
                   onNodeClick={selectExpansionNode}
                   onNodeHover={setHoveredNode}
+                  onZoomChange={setLocalZoom}
                   zoom={localZoom}
                 />
               </div>
@@ -467,7 +563,8 @@ function NetworkGraph() {
               </div>
             )}
             {hoveredNode && <div className="pointer-events-none absolute right-4 top-4 z-10 w-[min(22rem,calc(100%-2rem))] rounded-xl border border-border/80 bg-background/95 p-4 shadow-xl backdrop-blur"><EntityDetails details={details} name={hoveredNode} /></div>}
-            <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 rounded-lg border border-border/70 bg-[#fffdf9]/95 px-3 py-2 text-[11px] text-muted-foreground shadow-sm backdrop-blur"><span className="size-2 rounded-full bg-[#d97757]" /> Focus <span className="size-2 rounded-full bg-[#2f7d6d]" /> Company <span className="size-2 rounded-full bg-[#877666]" /> Entity <span>· 上／下數＝可展開關係</span> {expandedNodes.size > 0 && <span>· {expandedNodes.size} expanded</span>}</div>
+            {useLocalRelationshipMap && graphData.edges.length > 0 && <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-md border border-border/70 bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur sm:hidden">拖曳移動 · 雙指縮放</div>}
+            <div className="absolute bottom-4 left-4 z-10 hidden items-center gap-2 rounded-lg border border-border/70 bg-[#fffdf9]/95 px-3 py-2 text-[11px] text-muted-foreground shadow-sm backdrop-blur sm:flex"><span className="size-2 rounded-full bg-[#d97757]" /> Focus <span className="size-2 rounded-full bg-[#2f7d6d]" /> Company <span className="size-2 rounded-full bg-[#877666]" /> Entity <span>· 拖曳空白處移動畫布、雙指縮放</span> {expandedNodes.size > 0 && <span>· {expandedNodes.size} expanded</span>}</div>
             <div className="absolute bottom-4 right-4 z-10 flex gap-1 rounded-lg border border-border/70 bg-background/90 p-1 shadow-sm backdrop-blur"><Button aria-label="Zoom out" onClick={() => zoom(0.8)} size="icon" variant="ghost"><Minus /></Button><Button aria-label="Reset graph expansion" onClick={resetGraph} size="icon" variant="ghost"><RefreshCw /></Button><Button aria-label="Zoom in" onClick={() => zoom(1.2)} size="icon" variant="ghost"><Plus /></Button></div>
           </div></CardContent>
         </Card>

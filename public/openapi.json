@@ -1,0 +1,196 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Taiwan Company Network API",
+    "version": "1.0.0",
+    "description": "Read-only company registration summaries and relationship-index links. Relationship links are not independently verified ownership claims."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8787/api/v1",
+      "description": "Local service"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "Service status",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/companies": {
+      "get": {
+        "operationId": "searchCompanies",
+        "summary": "Search companies by partial registered name or stock code",
+        "parameters": [
+          { "name": "query", "in": "query", "required": true, "schema": { "type": "string", "minLength": 1, "maxLength": 100 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "minimum": 0, "default": 0 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated company matches",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CompanySearchPage" } } }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/companies/{name}": {
+      "get": {
+        "operationId": "getCompany",
+        "summary": "Get a company registration summary",
+        "parameters": [
+          { "name": "name", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Company summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": { "data": { "$ref": "#/components/schemas/Company" } }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/companies/{name}/relationships": {
+      "get": {
+        "operationId": "getCompanyRelationships",
+        "summary": "List direct indexed relationships",
+        "parameters": [
+          { "name": "name", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "direction", "in": "query", "schema": { "type": "string", "enum": ["both", "upstream", "downstream"], "default": "both" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "minimum": 0, "default": 0 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated direct relationships",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RelationshipPage" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Alias": {
+        "type": "object",
+        "required": ["code", "market"],
+        "properties": {
+          "code": { "type": "string" },
+          "market": { "type": ["string", "null"] }
+        }
+      },
+      "Company": {
+        "type": "object",
+        "required": ["name", "id", "capital", "representative", "address", "aliases", "relationships", "webUrl"],
+        "properties": {
+          "name": { "type": "string" },
+          "id": { "type": ["string", "null"] },
+          "capital": { "type": ["number", "null"] },
+          "representative": { "type": ["string", "null"] },
+          "address": { "type": ["string", "null"] },
+          "aliases": { "type": "array", "items": { "$ref": "#/components/schemas/Alias" } },
+          "relationships": {
+            "type": "object",
+            "required": ["upstreamCount", "downstreamCount"],
+            "properties": {
+              "upstreamCount": { "type": "integer" },
+              "downstreamCount": { "type": "integer" }
+            }
+          },
+          "webUrl": { "type": "string", "format": "uri" }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "required": ["limit", "offset", "totalItems", "hasMore", "nextOffset"],
+        "properties": {
+          "limit": { "type": "integer" },
+          "offset": { "type": "integer" },
+          "totalItems": { "type": "integer" },
+          "hasMore": { "type": "boolean" },
+          "nextOffset": { "type": ["integer", "null"] }
+        }
+      },
+      "CompanySearchPage": {
+        "type": "object",
+        "required": ["data", "pagination"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "aliases"],
+              "properties": {
+                "name": { "type": "string" },
+                "aliases": { "type": "array", "items": { "$ref": "#/components/schemas/Alias" } }
+              }
+            }
+          },
+          "pagination": { "$ref": "#/components/schemas/Pagination" }
+        }
+      },
+      "RelationshipPage": {
+        "type": "object",
+        "required": ["companyName", "direction", "data", "pagination"],
+        "properties": {
+          "companyName": { "type": "string" },
+          "direction": { "type": "string", "enum": ["both", "upstream", "downstream"] },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["companyName", "direction"],
+              "properties": {
+                "companyName": { "type": "string" },
+                "direction": { "type": "string", "enum": ["upstream", "downstream"] }
+              }
+            }
+          },
+          "pagination": { "$ref": "#/components/schemas/Pagination" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" },
+              "details": {}
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "ValidationError": {
+        "description": "Invalid request parameters",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "NotFound": {
+        "description": "Company not found",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    }
+  }
+}

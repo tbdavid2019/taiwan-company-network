@@ -1,0 +1,11 @@
+# 888台灣的公司關係網
+
+Explore Taiwan company registration summaries and direct relationship-index links.
+
+## Agent Skill
+
+- Skill instructions: https://tbdavid2019.github.io/taiwan-company-network/skills/taiwan-company-network/SKILL.md
+- API contract: https://tbdavid2019.github.io/taiwan-company-network/openapi.json
+- Source: https://github.com/tbdavid2019/taiwan-company-network
+
+Relationship links are index data and must not be described as independently verified ownership or investment claims.

@@ -8,11 +8,11 @@ function AdminFooter() {
         <span className="flex items-center gap-2">
           <a
             className="underline-offset-4 hover:text-foreground hover:underline"
-            href="https://github.com/tbdavid2019/taiwan-company-network"
+            href={`${import.meta.env.BASE_URL}skills/taiwan-company-network/SKILL.md`}
             rel="noreferrer"
             target="_blank"
           >
-            Source code
+            Skill
           </a>
           <span aria-hidden="true">·</span>
           <span>AGPL-3.0-or-later</span>

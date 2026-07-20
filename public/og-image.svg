@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fffdf9"/>
+      <stop offset="1" stop-color="#f2ede6"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#18202c" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0 0 10 5 0 10Z" fill="#9b8e82"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1200" height="14" fill="#2563eb"/>
+
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif">
+    <g transform="translate(72 66)">
+      <rect width="50" height="50" rx="14" fill="#2563eb"/>
+      <g transform="translate(11 9)" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5">
+        <path d="M14 8v9M4 30v-9h20v9"/>
+        <circle cx="14" cy="5" r="3.5"/>
+        <circle cx="4" cy="32" r="3.5"/>
+        <circle cx="24" cy="32" r="3.5"/>
+      </g>
+      <text x="68" y="22" fill="#111827" font-size="23" font-weight="750">888台灣的公司關係網</text>
+      <text x="68" y="44" fill="#64748b" font-size="14" letter-spacing="2">ENTITY EXPLORER</text>
+    </g>
+
+    <text x="72" y="230" fill="#111827" font-size="56" font-weight="800">探索臺灣公司的關係脈絡</text>
+    <text x="72" y="286" fill="#475569" font-size="25">從公司登記資料，看見法人、代表人與董監事之間的連結</text>
+
+    <g transform="translate(850 322)" filter="url(#shadow)">
+      <path d="M0 0-145-90M0 0 155-84M0 0-132 110M0 0 148 118" fill="none" marker-end="url(#arrow)" stroke="#b7aba0" stroke-width="4"/>
+      <circle cx="0" cy="0" r="52" fill="#f3d3c7"/>
+      <circle cx="0" cy="0" r="38" fill="#d97757" stroke="#fff" stroke-width="6"/>
+      <g fill="#2f7d6d" stroke="#fff" stroke-width="5">
+        <circle cx="-145" cy="-90" r="28"/>
+        <circle cx="155" cy="-84" r="28"/>
+        <circle cx="-132" cy="110" r="28"/>
+        <circle cx="148" cy="118" r="28"/>
+      </g>
+    </g>
+
+    <g transform="translate(72 484)">
+      <rect width="478" height="66" rx="16" fill="#0f172a"/>
+      <text x="25" y="41" fill="#fff" font-size="20" font-weight="650">搜尋公司名稱、股票代號與關係網路</text>
+    </g>
+
+    <text x="72" y="594" fill="#475569" font-size="18">tbdavid2019.github.io/taiwan-company-network</text>
+    <text x="1128" y="594" fill="#9a8d82" font-size="16" font-weight="700" letter-spacing="2" text-anchor="end">DAVID888</text>
+  </g>
+</svg>

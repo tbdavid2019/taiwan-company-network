@@ -4,6 +4,18 @@
 
 感謝原作者 [voidful](https://github.com/voidful) 建立原始專案與整理資料；本 repository 由 [tbdavid2019](https://github.com/tbdavid2019) 維護後續的 Vite、UI 與部署調整。
 
+## 畫面範例
+
+### 桌面版
+
+![中聯油脂股份有限公司關係網桌面版](docs/screenshots/company-network-desktop.png)
+
+### 手機版
+
+手機版圖表支援拖曳節點、拖曳空白處移動畫布，以及雙指縮放。
+
+<img src="docs/screenshots/company-network-mobile.png" alt="中聯油脂股份有限公司關係網手機版" width="390" />
+
 ## 本機開發
 
 需要 Node.js 22 或更新版本：
@@ -18,6 +30,43 @@ npm run dev
 ```bash
 npm run build
 ```
+
+## Agent Skill、REST API 與 MCP
+
+公開 Skill：<https://tbdavid2019.github.io/taiwan-company-network/skills/taiwan-company-network/SKILL.md>
+
+啟動唯讀 REST API 與 Streamable HTTP MCP：
+
+```bash
+npm run api
+```
+
+預設端點：
+
+- REST API：`http://127.0.0.1:8787/api/v1`
+- MCP：`http://127.0.0.1:8787/mcp`
+- OpenAPI：[public/openapi.json](public/openapi.json)
+
+搜尋範例：
+
+```bash
+curl 'http://127.0.0.1:8787/api/v1/companies?query=中聯油脂'
+```
+
+若 MCP client 使用本機 stdio server：
+
+```json
+{
+  "mcpServers": {
+    "taiwan-company-network": {
+      "command": "npm",
+      "args": ["--prefix", "/absolute/path/to/taiwan-company-network", "run", "mcp"]
+    }
+  }
+}
+```
+
+目前 GitHub Pages 會公開 Skill 與 OpenAPI 文件；REST/MCP 是可部署的 server process，需另行放到能執行 Node.js 且可容納資料集的服務。
 
 重新建立公司關係資料（會下載公開快照，並可從 `cache/` 續跑）：
 
@@ -60,7 +109,7 @@ npm run generate:aliases
 
 本專案新增與修改的程式碼以 GNU Affero General Public License v3.0 或更新版本（AGPL-3.0-or-later）發布，詳見 [LICENSE](LICENSE)。原始 Creative Tim／Argon 程式碼保留其 MIT 授權與著作權聲明，詳見 [LICENSE-MIT](LICENSE-MIT)。
 
-本專案為網路應用程式；若你部署修改版本，請同時提供對應原始碼。頁面 footer 的 Source code 連結會指向本 repository。
+本專案為網路應用程式；若你部署修改版本，請同時提供對應原始碼。公開 Agent Skill 內保留本 repository 與 API 契約連結。
 
 ## 相關名詞
 
