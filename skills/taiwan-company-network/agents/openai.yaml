@@ -1,0 +1,4 @@
+interface:
+  display_name: "Taiwan Company Network"
+  short_description: "Search Taiwan companies and inspect relationship data"
+  default_prompt: "Use $taiwan-company-network to find a Taiwan company and explain its direct relationship network."
