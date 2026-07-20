@@ -31,42 +31,11 @@ npm run dev
 npm run build
 ```
 
-## Agent Skill、REST API 與 MCP
+## Agent Skill
 
-公開 Skill：<https://tbdavid2019.github.io/taiwan-company-network/skills/taiwan-company-network/SKILL.md>
+公開 Skill 頁面：<https://tbdavid2019.github.io/taiwan-company-network/skill>
 
-啟動唯讀 REST API 與 Streamable HTTP MCP：
-
-```bash
-npm run api
-```
-
-預設端點：
-
-- REST API：`http://127.0.0.1:8787/api/v1`
-- MCP：`http://127.0.0.1:8787/mcp`
-- OpenAPI：[public/openapi.json](public/openapi.json)
-
-搜尋範例：
-
-```bash
-curl 'http://127.0.0.1:8787/api/v1/companies?query=中聯油脂'
-```
-
-若 MCP client 使用本機 stdio server：
-
-```json
-{
-  "mcpServers": {
-    "taiwan-company-network": {
-      "command": "npm",
-      "args": ["--prefix", "/absolute/path/to/taiwan-company-network", "run", "mcp"]
-    }
-  }
-}
-```
-
-目前 GitHub Pages 會公開 Skill 與 OpenAPI 文件；REST/MCP 是可部署的 server process，需另行放到能執行 Node.js 且可容納資料集的服務。
+頁面內可直接閱讀、複製或下載 `SKILL.md`。REST/MCP 的程式碼已保留於 repository，但在公開遠端端點正式部署前，不宣告為可用服務。
 
 重新建立公司關係資料（會下載公開快照，並可從 `cache/` 續跑）：
 

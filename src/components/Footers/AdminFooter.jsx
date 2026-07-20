@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 function AdminFooter() {
   return (
@@ -6,14 +7,12 @@ function AdminFooter() {
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-4">
         <span>Taiwan Company Network · Relationship data explorer</span>
         <span className="flex items-center gap-2">
-          <a
+          <Link
             className="underline-offset-4 hover:text-foreground hover:underline"
-            href={`${import.meta.env.BASE_URL}skills/taiwan-company-network/SKILL.md`}
-            rel="noreferrer"
-            target="_blank"
+            to="/skill"
           >
             Skill
-          </a>
+          </Link>
           <span aria-hidden="true">·</span>
           <span>AGPL-3.0-or-later</span>
           <span aria-hidden="true">·</span>
