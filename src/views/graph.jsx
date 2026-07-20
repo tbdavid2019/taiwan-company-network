@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { loadCompanyDetails, loadGraph } from "@/lib/companyData";
+import { nodeSelectedOnPointerEnd } from "@/lib/graphInteraction";
 import { graphShareFileName, graphShareText } from "@/lib/graphShare";
 import { calculatePinchViewport, clampZoom, companyPageTitle } from "@/lib/graphViewport";
 import { useCompany } from "context/CompanyContext";
@@ -156,7 +157,6 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
   const dragRef = useRef(null);
   const gestureRef = useRef(null);
   const pointersRef = useRef(new Map());
-  const didDragRef = useRef(false);
   const [draggedPositions, setDraggedPositions] = useState({});
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const panRef = useRef(pan);
@@ -262,7 +262,6 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
       zoomRef.current = nextViewport.zoom;
       setPan(nextViewport.pan);
       onZoomChange(nextViewport.zoom);
-      didDragRef.current = true;
       return;
     }
 
@@ -286,8 +285,13 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
     setPan(nextPan);
   };
   const endPointer = (event) => {
+    const drag = dragRef.current;
     pointersRef.current.delete(event.pointerId);
-    if (dragRef.current?.moved || gestureRef.current?.moved) didDragRef.current = true;
+    const selectedNodeId = nodeSelectedOnPointerEnd({
+      cancelled: event.type === "pointercancel",
+      drag,
+      remainingPointerCount: pointersRef.current.size,
+    });
     dragRef.current = null;
 
     if (pointersRef.current.size === 1) {
@@ -297,7 +301,7 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
     }
 
     gestureRef.current = null;
-    window.setTimeout(() => { didDragRef.current = false; }, 0);
+    if (selectedNodeId) onNodeClick(selectedNodeId);
   };
 
   return (
@@ -338,7 +342,6 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
             className="cursor-grab active:cursor-grabbing"
             data-node-id={node.id}
             key={node.id}
-            onClick={() => { if (!didDragRef.current) onNodeClick(node.id); }}
             onMouseEnter={() => onNodeHover(node.id)}
             onMouseLeave={() => onNodeHover("")}
           >

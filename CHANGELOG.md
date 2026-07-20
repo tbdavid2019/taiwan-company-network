@@ -23,6 +23,7 @@ All notable changes to this project are documented in this file.
 - Added PNG graph sharing: supported mobile browsers open the system share sheet; other browsers download the generated image.
 - Added a data-semantics notice to graph cards and exported images to avoid implying verified ownership, control, or investment relationships.
 - Fixed social sharing on Threads and X by excluding the page URL from file-share text, preventing an OG preview from appearing beside the generated PNG.
+- Fixed SVG relationship-node taps so pointer capture no longer prevents the expanded-entity details panel from appearing.
 
 ## 2026-07-19
 
