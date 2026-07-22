@@ -25,6 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { loadCompanyDetails, loadGraph } from "@/lib/companyData";
 import { nodeSelectedOnPointerEnd, pointerMovementExceedsThreshold } from "@/lib/graphInteraction";
+import { calculateNodeRadii } from "@/lib/graphNodeSizing";
 import { graphShareFileName, graphShareText } from "@/lib/graphShare";
 import { calculatePinchViewport, clampZoom, companyPageTitle } from "@/lib/graphViewport";
 import { useCompany } from "context/CompanyContext";
@@ -95,7 +96,14 @@ function makeGraphData(network, root, mode, details, expandedNodes) {
     }
   });
 
-  return { nodes, edges };
+  const nodeRadii = calculateNodeRadii(nodes, details);
+  return {
+    nodes: nodes.map((node) => ({
+      ...node,
+      data: { ...node.data, radius: nodeRadii.get(node.id) },
+    })),
+    edges,
+  };
 }
 
 function EntityDetails({ name, details }) {
@@ -333,8 +341,8 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
         const dx = target.x - source.x;
         const dy = target.y - source.y;
         const distance = Math.hypot(dx, dy) || 1;
-        const sourceRadius = nodesById.get(edge.source)?.data?.isRoot ? 24 : 18;
-        const targetRadius = nodesById.get(edge.target)?.data?.isRoot ? 30 : 24;
+        const sourceRadius = nodesById.get(edge.source)?.data?.radius || 16;
+        const targetRadius = nodesById.get(edge.target)?.data?.radius || 16;
         return <line key={edge.id} markerEnd="url(#relationship-arrow)" stroke="#b7aba0" strokeWidth="2" x1={source.x + (dx / distance) * sourceRadius} x2={target.x - (dx / distance) * targetRadius} y1={source.y + (dy / distance) * sourceRadius} y2={target.y - (dy / distance) * targetRadius} />;
       })}
       {data.nodes.map((node) => {
@@ -345,7 +353,7 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
         const label = String(node.data?.name || node.id);
         const upstreamCount = node.data?.upstreamCount || 0;
         const downstreamCount = node.data?.downstreamCount || 0;
-        const nodeRadius = isRoot ? 22 : 16;
+        const nodeRadius = node.data?.radius || (isRoot ? 22 : 16);
         const badgeY = position.y - nodeRadius - 17;
         return (
           <g
@@ -355,7 +363,7 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
             onMouseEnter={() => onNodeHover(node.id)}
             onMouseLeave={() => onNodeHover("")}
           >
-            {isRoot && <circle cx={position.x} cy={position.y} fill="#f3d3c7" r="34" />}
+            {isRoot && <circle cx={position.x} cy={position.y} fill="#f3d3c7" r={nodeRadius + 12} />}
             <circle cx={position.x} cy={position.y} fill={fill} r={nodeRadius} stroke="#fff" strokeWidth="3" />
             <g transform={`translate(${position.x - 43} ${badgeY})`}>
               <rect fill="#eef2ff" height="16" rx="8" stroke="#c7d2fe" width="40" />
@@ -365,7 +373,7 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
               <rect fill="#e7f6f1" height="16" rx="8" stroke="#a7e3d3" width="40" />
               <text fill="#18765f" fontFamily="Geist Variable, sans-serif" fontSize="10" fontWeight="600" textAnchor="middle" x="20" y="11">下 {downstreamCount}</text>
             </g>
-            <text fill={isRoot ? "#9a3412" : "#3f3933"} fontFamily="Geist Variable, sans-serif" fontSize={isRoot ? 16 : 12} fontWeight={isRoot ? 600 : 500} textAnchor="middle" x={position.x} y={position.y + (isRoot ? 48 : 38)}>{label}</text>
+            <text fill={isRoot ? "#9a3412" : "#3f3933"} fontFamily="Geist Variable, sans-serif" fontSize={isRoot ? 16 : 12} fontWeight={isRoot ? 600 : 500} textAnchor="middle" x={position.x} y={position.y + nodeRadius + (isRoot ? 26 : 22)}>{label}</text>
           </g>
         );
       })}
@@ -496,7 +504,7 @@ function NetworkGraph() {
           const isRoot = data.isRoot;
           const isCompany = data.kind === "company";
           return {
-            size: isRoot ? 38 : 28,
+            size: (data.radius || (isRoot ? 22 : 16)) * 2,
             fill: isRoot ? "#d97757" : isCompany ? "#2f7d6d" : "#877666",
             stroke: isRoot ? "#f3d3c7" : "#faf8f5",
             lineWidth: isRoot ? 8 : 3,
@@ -638,7 +646,7 @@ function NetworkGraph() {
       {shareMessage && <p aria-live="polite" className="mb-3 text-right text-xs text-muted-foreground">{shareMessage}</p>}
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <Card className="min-w-0 overflow-hidden" ref={graphShareRef}>
-          <CardHeader className="border-b border-border/70 bg-muted/20 px-5 py-4 sm:px-6"><div className="mb-4 flex flex-wrap gap-2" data-share-exclude="true">{VIEW_OPTIONS.map((option) => { const Icon = option.icon; const active = option.id === mode; return <Button className="gap-2" key={option.id} onClick={() => setMode(option.id)} size="sm" variant={active ? "default" : "outline"}><Icon className="size-3.5" />{option.label}</Button>; })}</div><div className="flex flex-wrap items-center justify-between gap-3"><div><CardTitle className="flex items-center gap-2 text-base"><Network className="size-4 text-primary" />{company} · {currentView?.label}</CardTitle><p className="mt-1 text-xs text-muted-foreground">{graphData.nodes.length} nodes · {graphData.edges.length} links</p></div><Badge className="hidden sm:inline-flex" variant="outline">{currentView?.hint}</Badge></div></CardHeader>
+          <CardHeader className="border-b border-border/70 bg-muted/20 px-5 py-4 sm:px-6"><div className="mb-4 flex flex-wrap gap-2" data-share-exclude="true">{VIEW_OPTIONS.map((option) => { const Icon = option.icon; const active = option.id === mode; return <Button className="gap-2" key={option.id} onClick={() => setMode(option.id)} size="sm" variant={active ? "default" : "outline"}><Icon className="size-3.5" />{option.label}</Button>; })}</div><div className="flex flex-wrap items-center justify-between gap-3"><div><CardTitle className="flex items-center gap-2 text-base"><Network className="size-4 text-primary" />{company} · {currentView?.label}</CardTitle><p className="mt-1 text-xs text-muted-foreground">{graphData.nodes.length} nodes · {graphData.edges.length} links · 圓球大小為此視圖中的相對資本額</p></div><Badge className="hidden sm:inline-flex" variant="outline">{currentView?.hint}</Badge></div></CardHeader>
           <CardContent className="p-0"><div className="relative h-[560px] w-full overflow-hidden bg-[#faf8f5] md:h-[640px]" ref={graphContainerRef}>
             {useLocalRelationshipMap && graphData.edges.length > 0 && (
               <div className="absolute inset-0 z-[1] p-3 sm:p-8">

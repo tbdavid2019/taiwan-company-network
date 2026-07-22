@@ -7,7 +7,7 @@ Show a company's registered capital through its node size without allowing Taiwa
 ## Behaviour
 
 - Each graph view collects positive numeric `資本總額` values from its visible company nodes, including the focus company.
-- Values are transformed with `log10` and scaled against the 10th and 90th percentiles of that view. Values below or above those bounds are clamped.
+- Values are transformed with `log10` and scaled against the 10th and 90th percentiles of that view. Tukey fences derived from the first and third quartiles further clamp isolated extremes.
 - Company node radii fall within a compact, fixed visual range. Missing or non-company nodes retain the existing default radius.
 - For a view with fewer than five valid capital values, use its log-space minimum and maximum instead of percentiles. Equal values receive the midpoint radius.
 - The focus node retains its orange fill and halo; size does not replace that distinction.
