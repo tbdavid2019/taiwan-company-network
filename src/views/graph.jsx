@@ -329,7 +329,7 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
           <path d="M0,0 L10,5 L0,10 Z" fill="#786f66" />
         </marker>
         <pattern id="david888-watermark" height="120" patternTransform="rotate(-18)" patternUnits="userSpaceOnUse" width="210">
-          <text fill="#6f6258" fillOpacity="0.06" fontFamily="Geist Variable, sans-serif" fontSize="22" fontWeight="700" letterSpacing="3" x="18" y="64">DAVID888</text>
+          <text fill="#6f6258" fillOpacity="0.06" fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize="22" fontWeight="700" letterSpacing="3" x="18" y="64">DAVID888</text>
         </pattern>
       </defs>
       <rect aria-hidden="true" fill="url(#david888-watermark)" height={viewBox.height} width={viewBox.width} x={viewBox.x} y={viewBox.y} />
@@ -367,13 +367,13 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
             <circle cx={position.x} cy={position.y} fill={fill} r={nodeRadius} stroke="#fff" strokeWidth="3" />
             <g transform={`translate(${position.x - 43} ${badgeY})`}>
               <rect fill="#eef2ff" height="16" rx="8" stroke="#c7d2fe" width="40" />
-              <text fill="#4f46e5" fontFamily="Geist Variable, sans-serif" fontSize="10" fontWeight="600" textAnchor="middle" x="20" y="11">上 {upstreamCount}</text>
+              <text fill="#4f46e5" fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize="10" fontWeight="600" textAnchor="middle" x="20" y="11">上 {upstreamCount}</text>
             </g>
             <g transform={`translate(${position.x + 3} ${badgeY})`}>
               <rect fill="#e7f6f1" height="16" rx="8" stroke="#a7e3d3" width="40" />
-              <text fill="#18765f" fontFamily="Geist Variable, sans-serif" fontSize="10" fontWeight="600" textAnchor="middle" x="20" y="11">下 {downstreamCount}</text>
+              <text fill="#18765f" fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize="10" fontWeight="600" textAnchor="middle" x="20" y="11">下 {downstreamCount}</text>
             </g>
-            <text fill={isRoot ? "#9a3412" : "#3f3933"} fontFamily="Geist Variable, sans-serif" fontSize={isRoot ? 16 : 12} fontWeight={isRoot ? 600 : 500} textAnchor="middle" x={position.x} y={position.y + nodeRadius + (isRoot ? 26 : 22)}>{label}</text>
+            <text fill={isRoot ? "#9a3412" : "#3f3933"} fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize={isRoot ? 16 : 12} fontWeight={isRoot ? 600 : 500} textAnchor="middle" x={position.x} y={position.y + nodeRadius + (isRoot ? 26 : 22)}>{label}</text>
           </g>
         );
       })}
