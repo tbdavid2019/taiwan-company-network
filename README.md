@@ -31,6 +31,15 @@ npm run dev
 npm run build
 ```
 
+## 預設字體
+
+網站將字體隨前端資產一起打包，不依賴外部字體服務：
+
+- 中文：Gen Jyuu Gothic Medium
+- 英文、數字與程式碼：JetBrains Mono Medium
+
+字體檔位於 `src/assets/fonts/custom/`，全域 CSS 會依字元自動套用對應字體。
+
 ## Agent Skill
 
 公開 Skill 頁面：<https://taiwan-company-network.david888.com/skill/>

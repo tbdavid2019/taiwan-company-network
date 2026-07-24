@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-07-24
+
+- Added bundled Gen Jyuu Gothic Medium and JetBrains Mono Medium fonts for the site's default Chinese and English typography.
+- Updated the global CSS and SVG graph labels to use the bundled font stack without relying on an external font service.
+- Documented the default font assets and usage in the README.
+
 ## 2026-07-20
 
 - Added company-specific browser titles in the format `{company} - 888台灣的公司關係網`.
