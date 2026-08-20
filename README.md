@@ -131,7 +131,7 @@ npm run deploy
 ```
 
 > [!IMPORTANT]
-> `git push origin master` 只會更新原始碼，不會更新正式網站。每次要發布新版時，push `master` 後還必須執行 `npm run deploy`，將 `dist/` 推送到 `gh-pages` 分支。
+> `master` 的 push 與每月自動排程都會觸發 GitHub Actions。工作流會更新公司資料、產生上市櫃公司索引、執行測試、建置網站，並自動部署到 `gh-pages`。若要手動發布，也可以執行 `npm run deploy`。
 
 預設網址為：
 `https://taiwan-company-network.david888.com/`
