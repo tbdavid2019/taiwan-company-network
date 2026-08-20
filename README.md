@@ -131,7 +131,7 @@ npm run deploy
 ```
 
 > [!IMPORTANT]
-> `master` 的 push 與每月自動排程都會觸發 GitHub Actions。工作流會更新公司資料、產生上市櫃公司索引、執行測試、建置網站，並自動部署到 `gh-pages`。若要手動發布，也可以執行 `npm run deploy`。
+> `master` 的 push 與每週一自動排程都會觸發 GitHub Actions。工作流會檢查公司資料是否更新、產生上市櫃公司索引、執行測試、建置網站，並自動部署到 `gh-pages`。若要手動發布，也可以執行 `npm run deploy`。
 
 預設網址為：
 `https://taiwan-company-network.david888.com/`
