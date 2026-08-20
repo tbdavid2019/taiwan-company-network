@@ -27,9 +27,29 @@ function normalizeName(value) {
 }
 
 async function fetchJson(url) {
-  const response = await fetch(url, { headers: { Accept: "application/json" } });
-  if (!response.ok) throw new Error(`${url} returned ${response.status}`);
-  return response.json();
+  const retryDelays = [1000, 3000, 7000];
+  let lastError;
+
+  for (let attempt = 0; attempt <= retryDelays.length; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "taiwan-company-network-data-updater/2.0",
+        },
+        signal: AbortSignal.timeout(30000),
+      });
+      if (!response.ok) throw new Error(`${url} returned ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      lastError = error;
+      if (attempt === retryDelays.length) break;
+      console.warn(`Unable to fetch ${url}; retrying in ${retryDelays[attempt]} ms.`);
+      await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
+    }
+  }
+
+  throw lastError;
 }
 
 const dataDirectory = new URL("../public/data/", import.meta.url);
