@@ -11,9 +11,14 @@ Explore Taiwan company registration summaries and direct relationship-index link
 
 ## WebMCP
 
-When opened in a compatible Chrome WebMCP environment, this site registers read-only tools for searching Taiwan companies, reading a company profile, and reading direct upstream/downstream relationships. The integration is progressive enhancement; the GET API and normal UI remain available without WebMCP.
+When opened in a compatible Chrome WebMCP environment (Chrome 149+ with `#enable-webmcp-testing` or Origin Trial), this site provides both Imperative tools (`document.modelContext.registerTool`) and Declarative HTML form tools:
+- `search_taiwan_companies`: Search companies & legal entities by name, stock code, or alias.
+- `get_taiwan_company_profile`: Retrieve registered ID, capital, representative, address, and aliases.
+- `get_taiwan_company_links`: Retrieve direct upstream and downstream relationship links.
+- `open_company_network`: Navigate browser tab directly to the interactive company relationship graph.
+- Declarative forms: `search_companies_form`, `quick_company_search`, `switch_relationship_view`.
 
 - WebMCP documentation: https://developer.chrome.com/docs/ai/webmcp?hl=zh-tw
-- Tool status: inspect the document root `data-webmcp` attribute.
+- Tool status: inspect the document root `data-webmcp` and `data-webmcp-tools` attributes.
 
 Relationship links are index data and must not be described as independently verified ownership or investment claims.
