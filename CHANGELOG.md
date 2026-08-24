@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-08-24
+
+- Added progressive Chrome WebMCP support through `document.modelContext`.
+- Registered read-only `search_taiwan_companies`, `get_taiwan_company_profile`, and `get_taiwan_company_links` tools.
+- Added stock-code and listed-company alias resolution, strict input validation, compact tool output, and untrusted-content annotations.
+- Added graceful fallback for browsers without WebMCP and a `data-webmcp` runtime status attribute for inspection.
+- Added WebMCP tests, README setup instructions, and `llms.txt` integration notes.
+
 ## 2026-07-24
 
 - Added bundled Gen Jyuu Gothic Medium and JetBrains Mono Medium fonts for the site's default Chinese and English typography.

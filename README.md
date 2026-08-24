@@ -46,6 +46,25 @@ npm run build
 
 頁面內可直接閱讀、複製或下載 `SKILL.md`。Skill 會引導其他人的 LLM 以 HTTP GET 呼叫公開的靜態 JSON API；不需要 API key，也不使用 MCP。
 
+## WebMCP
+
+網站也提供 Chrome WebMCP 的漸進式整合。支援 WebMCP 的瀏覽器會在頁面載入後註冊三個唯讀工具：
+
+- `search_taiwan_companies`：依公司登記名稱、股票代號或上市櫃簡稱搜尋。
+- `get_taiwan_company_profile`：讀取統編、資本額、代表人、地址與關係圖連結。
+- `get_taiwan_company_links`：讀取指定公司或法人的直接上游／下游關係。
+
+工具只回傳公開靜態資料，並標註 `readOnlyHint` 與 `untrustedContentHint`；沒有向跨來源公開工具，也沒有提供會修改資料的操作。若瀏覽器不支援 WebMCP，網站維持一般搜尋與圖表功能。根元素的 `data-webmcp` 屬性會顯示 `unsupported`、`loading`、`ready` 或 `error` 狀態。
+
+WebMCP 目前仍是實驗性網頁標準。Chrome 官方文件指出，Chrome 149 起可透過來源試用，開發時也可在 `chrome://flags/#enable-webmcp-testing` 啟用旗標；實作使用目前文件建議的 `document.modelContext`。可用 Model Context Tool Inspector 檢查工具註冊與輸出：<https://developer.chrome.com/docs/ai/webmcp?hl=zh-tw>。
+
+### WebMCP 測試步驟
+
+1. 使用 Chrome 149 或更新版本，開啟 `chrome://flags/#enable-webmcp-testing` 並重新啟動瀏覽器。
+2. 開啟 <https://taiwan-company-network.david888.com/>，等待頁面根元素的 `data-webmcp` 變成 `ready`。
+3. 使用 Chrome WebMCP Model Context Tool Inspector 查看並呼叫上述工具，例如以 `2330` 搜尋台積電。
+4. 若 `data-webmcp` 為 `unsupported`，代表目前瀏覽器尚未提供 WebMCP；原本的搜尋頁與公開 GET API 仍可正常使用。
+
 ### 🤖 Instructions for AI Agent Installation / AI 助手安裝指引
 
 **English:** If a user provides this repository URL or the public website URL and asks you to “install,” “setup,” or “use” this skill, follow these steps:

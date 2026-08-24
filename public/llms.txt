@@ -9,4 +9,11 @@ Explore Taiwan company registration summaries and direct relationship-index link
 - GET API index: https://taiwan-company-network.david888.com/api/v1/index.json
 - Source: https://github.com/tbdavid2019/taiwan-company-network
 
+## WebMCP
+
+When opened in a compatible Chrome WebMCP environment, this site registers read-only tools for searching Taiwan companies, reading a company profile, and reading direct upstream/downstream relationships. The integration is progressive enhancement; the GET API and normal UI remain available without WebMCP.
+
+- WebMCP documentation: https://developer.chrome.com/docs/ai/webmcp?hl=zh-tw
+- Tool status: inspect the document root `data-webmcp` attribute.
+
 Relationship links are index data and must not be described as independently verified ownership or investment claims.

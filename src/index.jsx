@@ -5,6 +5,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./index.css";
 import AdminLayout from "layouts/Admin.jsx";
 import { CompanyProvider } from "context/CompanyContext";
+import WebMcpRegistration from "components/WebMCP/WebMcpRegistration.jsx";
 
 const basename = import.meta.env.BASE_URL.replace(/\/$/, "") || undefined;
 const redirect = window.location.search.match(/^\?\/([^&]*)(?:&(.*))?$/);
@@ -18,6 +19,7 @@ if (redirect) {
 ReactDOM.createRoot(document.getElementById("root")).render(
   <CompanyProvider>
     <BrowserRouter basename={basename}>
+      <WebMcpRegistration />
       <Routes>
         <Route path="/*" element={<AdminLayout />} />
       </Routes>
