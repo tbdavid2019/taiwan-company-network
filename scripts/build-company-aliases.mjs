@@ -40,7 +40,12 @@ async function fetchJson(url) {
         signal: AbortSignal.timeout(30000),
       });
       if (!response.ok) throw new Error(`${url} returned ${response.status}`);
-      return await response.json();
+      const body = await response.text();
+      try {
+        return JSON.parse(body);
+      } catch {
+        throw new Error(`${url} returned a non-JSON response`);
+      }
     } catch (error) {
       lastError = error;
       if (attempt === retryDelays.length) break;
@@ -61,10 +66,23 @@ const details = Object.assign({}, ...detailChunks);
 const knownCompanyNames = new Map(
   Object.keys(details).map((name) => [normalizeName(name), name]),
 );
-const aliases = new Map();
+const existingAliasPayload = JSON.parse(await readFile(new URL("company_aliases.json", dataDirectory), "utf8"));
+const aliases = new Map(
+  Object.entries(existingAliasPayload.aliases || {}).map(([lookup, entries]) => [
+    lookup,
+    entries.filter((entry) => knownCompanyNames.has(normalizeName(entry.name))),
+  ]),
+);
 
 for (const source of sources) {
-  const records = await fetchJson(source.url);
+  let records;
+  try {
+    records = await fetchJson(source.url);
+  } catch (error) {
+    console.warn(`Unable to refresh ${source.market} aliases; keeping valid entries from the previous snapshot.`);
+    console.warn(error.message);
+    continue;
+  }
   for (const record of records) {
     const registeredName = knownCompanyNames.get(normalizeName(record[source.name]));
     const alias = String(record[source.alias] || "").trim();
