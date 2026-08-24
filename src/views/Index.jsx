@@ -204,16 +204,31 @@ function CompanyList() {
                 {query ? `${filteredEntities.length.toLocaleString()} matches` : "Search company records and the relationship index"}
               </p>
             </div>
-            <div className="relative w-full md:max-w-sm">
+            <form
+              action="/index"
+              className="relative w-full md:max-w-sm"
+              method="GET"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (filteredEntities.length > 0) {
+                  openEntity(filteredEntities[0]);
+                }
+              }}
+              role="search"
+              tooldescription="Search Taiwan companies and legal entities in the directory by registered name, stock code, or alias"
+              toolname="search_companies_form"
+            >
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 aria-label="Search entities"
                 className="h-10 bg-background pl-9 pr-10"
+                name="query"
                 onChange={(event) => {
                   setQuery(event.target.value);
                   setVisibleCount(24);
                 }}
                 placeholder="Search by registered company name..."
+                toolparamdescription="Registered company name, stock code (e.g. 2330), or alias to search"
                 value={query}
               />
               {query && (
@@ -225,12 +240,13 @@ function CompanyList() {
                     setVisibleCount(24);
                   }}
                   size="icon"
+                  type="button"
                   variant="ghost"
                 >
                   <X />
                 </Button>
               )}
-            </div>
+            </form>
           </div>
         </CardHeader>
 

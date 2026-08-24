@@ -4,14 +4,14 @@ All notable changes to this project are documented in this file.
 
 ## 2026-08-24
 
-- Added progressive Chrome WebMCP support through `document.modelContext`.
-- Registered read-only `search_taiwan_companies`, `get_taiwan_company_profile`, and `get_taiwan_company_links` tools.
-- Added stock-code and listed-company alias resolution, strict input validation, compact tool output, and untrusted-content annotations.
-- Added graceful fallback for browsers without WebMCP and a `data-webmcp` runtime status attribute for inspection.
-- Added WebMCP tests, README setup instructions, and `llms.txt` integration notes.
-- Made listed-company alias refreshes keep the previous valid snapshot when an upstream market endpoint returns an invalid or unavailable response, so deployments can continue with the last known aliases.
-- Added Chrome 149 compatibility through a `navigator.modelContext` fallback while keeping `document.modelContext` as the preferred Chrome 150 API.
-- Clarified that the public domain requires a WebMCP Origin Trial token; the testing flag is intended for local development.
+- Enhanced Chrome WebMCP implementation with full imperative and declarative tool support according to the official specification.
+- Added `open_company_network` tool with UI state navigation synchronization via React Router.
+- Added Declarative WebMCP form annotations (`toolname`, `tooldescription`, `toolparamdescription`) to directory search (`/index`), navbar quick search, and relationship graph view controls (`/graph`).
+- Added in-page WebMCP Live Test Runner and interactive tools explorer on `/skill`.
+- Added strict character budget compliance checks (tool names ≤ 30 chars, parameter names ≤ 30 chars, parameter descriptions ≤ 150 chars, tool descriptions ≤ 500 chars, output ≤ 1500 chars).
+- Supported `toolchange` event listeners on `document.modelContext` with AbortController lifecycle cleanup.
+- Supported Chrome 150 `document.modelContext` with Chrome 149 `navigator.modelContext` fallback.
+- Added comprehensive unit test suite covering tool registration, execution, navigation, and budget constraints.
 
 ## 2026-07-24
 

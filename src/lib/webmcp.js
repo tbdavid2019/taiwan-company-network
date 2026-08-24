@@ -173,9 +173,38 @@ export function executeCompanyRelationships(index, { company, direction = "both"
   return compactJson(relationships);
 }
 
+export function executeOpenCompanyNetwork(index, { company, direction = "both", baseUrl, onNavigate } = {}) {
+  const name = index.resolveName(company);
+  if (!name) {
+    return compactJson({ error: `找不到公司或法人：「${String(company || "").trim()}」。請先使用搜尋工具。` });
+  }
+  const validDirections = ["both", "upstream", "downstream"];
+  const chosenDirection = validDirections.includes(direction) ? direction : "both";
+  const url = companyUrl(name, baseUrl);
+
+  if (typeof onNavigate === "function") {
+    try {
+      onNavigate({ name, direction: chosenDirection, url });
+    } catch {
+      // Navigation callback errors are swallowed gracefully
+    }
+  }
+
+  const node = index.graph[name] || {};
+  return compactJson({
+    success: true,
+    name,
+    direction: chosenDirection,
+    upstreamCount: (node.in || []).length,
+    downstreamCount: (node.out || []).length,
+    webUrl: url,
+    message: `已開啟「${name}」的關係圖。`,
+  });
+}
+
 // API shape and annotations follow Chrome's WebMCP imperative API:
 // https://developer.chrome.com/docs/ai/webmcp/imperative-api
-export function createCompanyWebMcpTools(index, { baseUrl = DEFAULT_BASE_URL } = {}) {
+export function createCompanyWebMcpTools(index, { baseUrl = DEFAULT_BASE_URL, onNavigate } = {}) {
   return [
     {
       name: "search_taiwan_companies",
@@ -222,10 +251,25 @@ export function createCompanyWebMcpTools(index, { baseUrl = DEFAULT_BASE_URL } =
       annotations: { readOnlyHint: true, untrustedContentHint: true },
       execute: async (input) => executeCompanyRelationships(index, { ...input, baseUrl }),
     },
+    {
+      name: "open_company_network",
+      description: "Navigate the browser to display the interactive relationship graph for a named Taiwan company or legal entity.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          company: { type: "string", description: "Exact registered name, stock code, or listed-company alias." },
+          direction: { type: "string", enum: ["both", "upstream", "downstream"], description: "Initial relationship direction to display in the graph." },
+        },
+        required: ["company"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: false, untrustedContentHint: true },
+      execute: async (input) => executeOpenCompanyNetwork(index, { ...input, baseUrl, onNavigate }),
+    },
   ];
 }
 
-export async function registerCompanyWebMcp(tools, modelContext, { signal } = {}) {
+export async function registerCompanyWebMcp(tools, modelContext, { signal, exposedTo } = {}) {
   if (!modelContext || typeof modelContext.registerTool !== "function") {
     return { supported: false, registered: [] };
   }
@@ -233,8 +277,10 @@ export async function registerCompanyWebMcp(tools, modelContext, { signal } = {}
   const registered = [];
   try {
     for (const tool of tools) {
-      const options = signal ? { signal } : undefined;
-      await modelContext.registerTool(tool, options);
+      const options = {};
+      if (signal) options.signal = signal;
+      if (Array.isArray(exposedTo) && exposedTo.length > 0) options.exposedTo = exposedTo;
+      await modelContext.registerTool(tool, Object.keys(options).length > 0 ? options : undefined);
       registered.push(tool.name);
     }
     return { supported: true, registered };

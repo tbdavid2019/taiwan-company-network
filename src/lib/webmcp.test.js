@@ -7,6 +7,7 @@ import {
   executeCompanySearch,
   executeCompanyProfile,
   executeCompanyRelationships,
+  executeOpenCompanyNetwork,
   registerCompanyWebMcp,
   resolveWebMcpModelContext,
 } from "./webmcp.js";
@@ -64,6 +65,25 @@ test("profile and relationships resolve stock aliases and keep outputs bounded",
   assert.ok(JSON.stringify(relationships).length <= 1400);
 });
 
+test("executeOpenCompanyNetwork triggers navigation and returns confirmation", () => {
+  let navigated = null;
+  const result = JSON.parse(executeOpenCompanyNetwork(index, {
+    company: "2330",
+    direction: "both",
+    onNavigate: (payload) => {
+      navigated = payload;
+    },
+  }));
+
+  assert.equal(result.success, true);
+  assert.equal(result.name, "台灣積體電路製造股份有限公司");
+  assert.equal(result.direction, "both");
+  assert.equal(result.upstreamCount, 1);
+  assert.equal(result.downstreamCount, 1);
+  assert.ok(navigated);
+  assert.equal(navigated.name, "台灣積體電路製造股份有限公司");
+});
+
 test("relationships reject unsupported directions instead of guessing", () => {
   const result = JSON.parse(executeCompanyRelationships(index, {
     company: "台積電",
@@ -73,37 +93,54 @@ test("relationships reject unsupported directions instead of guessing", () => {
   assert.match(result.error, /direction/);
 });
 
-test("tools use read-only annotations and documented input schemas", () => {
+test("tools adhere to Chrome WebMCP character budget constraints", () => {
   const tools = createCompanyWebMcpTools(index, { baseUrl: "https://example.com/" });
 
   assert.deepEqual(tools.map((tool) => tool.name), [
     "search_taiwan_companies",
     "get_taiwan_company_profile",
     "get_taiwan_company_links",
+    "open_company_network",
   ]);
+
   for (const tool of tools) {
-    assert.equal(tool.annotations.readOnlyHint, true);
-    assert.equal(tool.annotations.untrustedContentHint, true);
+    // Tool name <= 30 chars
+    assert.ok(tool.name.length <= 30, `Tool name ${tool.name} exceeds 30 chars`);
+    // Tool description <= 500 chars
+    assert.ok(tool.description.length <= 500, `Tool description for ${tool.name} exceeds 500 chars`);
     assert.equal(tool.inputSchema.type, "object");
-    assert.ok(tool.description.length <= 500);
+
+    // Property parameter names <= 30 chars, descriptions <= 150 chars
+    if (tool.inputSchema.properties) {
+      for (const [propName, propDef] of Object.entries(tool.inputSchema.properties)) {
+        assert.ok(propName.length <= 30, `Property ${propName} exceeds 30 chars`);
+        if (propDef.description) {
+          assert.ok(propDef.description.length <= 150, `Property desc for ${propName} exceeds 150 chars`);
+        }
+      }
+    }
   }
 });
 
-test("registerCompanyWebMcp uses document.modelContext and returns a cleanup signal", async () => {
+test("registerCompanyWebMcp uses document.modelContext and supports signal and exposedTo", async () => {
   const calls = [];
   const modelContext = {
     registerTool: async (tool, options) => {
-      calls.push({ name: tool.name, signal: options.signal });
+      calls.push({ name: tool.name, signal: options?.signal, exposedTo: options?.exposedTo });
     },
   };
   const controller = new AbortController();
   const tools = createCompanyWebMcpTools(index);
 
-  const result = await registerCompanyWebMcp(tools, modelContext, { signal: controller.signal });
+  const result = await registerCompanyWebMcp(tools, modelContext, {
+    signal: controller.signal,
+    exposedTo: ["https://example.com"],
+  });
 
   assert.equal(result.supported, true);
   assert.deepEqual(result.registered, tools.map((tool) => tool.name));
   assert.equal(calls[0].signal, controller.signal);
+  assert.deepEqual(calls[0].exposedTo, ["https://example.com"]);
 });
 
 test("registerCompanyWebMcp gracefully reports unsupported browsers", async () => {

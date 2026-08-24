@@ -59,25 +59,39 @@ function AdminNavbar({ onMenuClick }) {
           {isGraph && <><span className="text-muted-foreground">/</span><span className="text-muted-foreground">Relationship graph</span></>}
           {company && <><span className="text-muted-foreground">/</span><span className="max-w-52 truncate font-medium">{company}</span></>}
         </nav>
-        <div className="relative ml-auto w-full max-w-md">
+        <form
+          action="/graph"
+          className="relative ml-auto w-full max-w-md"
+          method="GET"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (matches[0]) openCompany(matches[0]);
+            else if (query.trim()) openCompany(query.trim());
+          }}
+          role="search"
+          tooldescription="Quickly search and jump to any company relationship graph"
+          toolname="quick_company_search"
+        >
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             aria-label="Search another company"
             className="h-9 bg-background pl-9 pr-8"
+            name="query"
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter" && matches[0]) openCompany(matches[0]);
             }}
             placeholder="Search another company…"
+            toolparamdescription="Company name or stock code (e.g. 2330) to navigate to"
             value={query}
           />
-          {query && <Button aria-label="Clear company search" className="absolute right-0 top-0 h-9 w-9 text-muted-foreground" onClick={() => setQuery("")} size="icon" variant="ghost"><X className="size-4" /></Button>}
+          {query && <Button aria-label="Clear company search" className="absolute right-0 top-0 h-9 w-9 text-muted-foreground" onClick={() => setQuery("")} size="icon" type="button" variant="ghost"><X className="size-4" /></Button>}
           {matches.length > 0 && (
             <div className="absolute left-0 right-0 top-11 z-50 overflow-hidden rounded-xl border border-border bg-popover p-1 shadow-xl">
               {matches.map((name) => <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-muted" key={name} onClick={() => openCompany(name)} type="button"><Building2 className="size-4 shrink-0 text-muted-foreground" /><span className="truncate">{name}</span></button>)}
             </div>
           )}
-        </div>
+        </form>
       </div>
     </header>
   );

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { loadCompanyAliases, loadCompanyDetails, loadGraph } from "@/lib/companyData";
 import {
@@ -18,6 +18,8 @@ function setWebMcpStatus(status, toolNames = [], api = "none") {
 }
 
 function WebMcpRegistration() {
+  const navigate = useNavigate();
+
   useEffect(() => {
     const { context: modelContext, api } = resolveWebMcpModelContext({
       documentObject: document,
@@ -32,13 +34,33 @@ function WebMcpRegistration() {
     let active = true;
     setWebMcpStatus("loading", [], api);
 
+    const onToolChange = () => {
+      if (typeof modelContext.getTools === "function") {
+        modelContext.getTools().then((tools) => {
+          if (!active || !Array.isArray(tools)) return;
+          const names = tools.map((t) => t.name || t);
+          setWebMcpStatus("ready", names, api);
+        }).catch(() => {});
+      }
+    };
+
+    if (typeof modelContext.addEventListener === "function") {
+      modelContext.addEventListener("toolchange", onToolChange, { signal: controller.signal });
+    }
+
     Promise.all([loadGraph(), loadCompanyDetails(), loadCompanyAliases()])
       .then(([graph, details, aliases]) => {
         if (!active) return null;
         const index = buildCompanyToolIndex({ aliases, details, graph });
         const baseUrl = new URL(import.meta.env.BASE_URL, window.location.origin).toString();
+        const tools = createCompanyWebMcpTools(index, {
+          baseUrl,
+          onNavigate: ({ name }) => {
+            navigate(`/graph?company=${encodeURIComponent(name)}`);
+          },
+        });
         return registerCompanyWebMcp(
-          createCompanyWebMcpTools(index, { baseUrl }),
+          tools,
           modelContext,
           { signal: controller.signal },
         );
@@ -55,7 +77,7 @@ function WebMcpRegistration() {
       active = false;
       controller.abort();
     };
-  }, []);
+  }, [navigate]);
 
   return null;
 }

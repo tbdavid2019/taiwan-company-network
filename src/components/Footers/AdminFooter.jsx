@@ -11,7 +11,7 @@ function AdminFooter() {
             className="underline-offset-4 hover:text-foreground hover:underline"
             to="/skill"
           >
-            Skill
+            Agent Skill & WebMCP
           </Link>
           <span aria-hidden="true">·</span>
           <span>AGPL-3.0-or-later</span>

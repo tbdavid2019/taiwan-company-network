@@ -646,7 +646,48 @@ function NetworkGraph() {
       {shareMessage && <p aria-live="polite" className="mb-3 text-right text-xs text-muted-foreground">{shareMessage}</p>}
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <Card className="min-w-0 overflow-hidden" ref={graphShareRef}>
-          <CardHeader className="border-b border-border/70 bg-muted/20 px-5 py-4 sm:px-6"><div className="mb-4 flex flex-wrap gap-2" data-share-exclude="true">{VIEW_OPTIONS.map((option) => { const Icon = option.icon; const active = option.id === mode; return <Button className="gap-2" key={option.id} onClick={() => setMode(option.id)} size="sm" variant={active ? "default" : "outline"}><Icon className="size-3.5" />{option.label}</Button>; })}</div><div className="flex flex-wrap items-center justify-between gap-3"><div><CardTitle className="flex items-center gap-2 text-base"><Network className="size-4 text-primary" />{company} · {currentView?.label}</CardTitle><p className="mt-1 text-xs text-muted-foreground">{graphData.nodes.length} nodes · {graphData.edges.length} links · 圓球大小為此視圖中的相對資本額</p></div><Badge className="hidden sm:inline-flex" variant="outline">{currentView?.hint}</Badge></div></CardHeader>
+          <CardHeader className="border-b border-border/70 bg-muted/20 px-5 py-4 sm:px-6">
+            <form
+              className="mb-4 flex flex-wrap gap-2"
+              data-share-exclude="true"
+              onSubmit={(e) => e.preventDefault()}
+              tooldescription="Switch the company relationship graph direction between all relationships, upstream incoming links, and downstream outgoing links"
+              toolname="switch_relationship_view"
+            >
+              {VIEW_OPTIONS.map((option) => {
+                const Icon = option.icon;
+                const active = option.id === mode;
+                return (
+                  <Button
+                    className="gap-2"
+                    key={option.id}
+                    onClick={() => setMode(option.id)}
+                    size="sm"
+                    toolparamdescription={`View ${option.label} (${option.hint})`}
+                    type="button"
+                    variant={active ? "default" : "outline"}
+                  >
+                    <Icon className="size-3.5" />
+                    {option.label}
+                  </Button>
+                );
+              })}
+            </form>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Network className="size-4 text-primary" />
+                  {company} · {currentView?.label}
+                </CardTitle>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {graphData.nodes.length} nodes · {graphData.edges.length} links · 圓球大小為此視圖中的相對資本額
+                </p>
+              </div>
+              <Badge className="hidden sm:inline-flex" variant="outline">
+                {currentView?.hint}
+              </Badge>
+            </div>
+          </CardHeader>
           <CardContent className="p-0"><div className="relative h-[560px] w-full overflow-hidden bg-[#faf8f5] md:h-[640px]" ref={graphContainerRef}>
             {useLocalRelationshipMap && graphData.edges.length > 0 && (
               <div className="absolute inset-0 z-[1] p-3 sm:p-8">

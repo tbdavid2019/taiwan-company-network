@@ -1,6 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import {
+  Bot,
   Building2,
   Clock3,
   ChevronRight,
@@ -20,6 +21,7 @@ import { useCompany } from "context/CompanyContext";
 const routeIcons = {
   Company: Building2,
   Graph: Network,
+  Skill: Bot,
 };
 
 function formatCapital(value) {
@@ -73,6 +75,12 @@ function Sidebar({ routes = [], isOpen, onClose }) {
           <nav className="space-y-1">
             {routes.map((route) => {
               const Icon = routeIcons[route.name] || ChevronRight;
+              const label =
+                route.name === "Company"
+                  ? "Companies"
+                  : route.name === "Graph"
+                  ? "Network graph"
+                  : "Agent Skill & WebMCP";
               return (
                 <NavLink
                   className={({ isActive }) =>
@@ -89,7 +97,7 @@ function Sidebar({ routes = [], isOpen, onClose }) {
                   {({ isActive }) => (
                     <>
                       <Icon className={`size-4 ${isActive ? "text-blue-300" : "text-slate-500"}`} />
-                      <span className="flex-1">{route.name === "Company" ? "Companies" : "Network graph"}</span>
+                      <span className="flex-1">{label}</span>
                       <ChevronRight className="size-3 opacity-0 transition-opacity group-hover:opacity-60" />
                     </>
                   )}

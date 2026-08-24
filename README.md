@@ -48,22 +48,32 @@ npm run build
 
 ## WebMCP
 
-網站也提供 Chrome WebMCP 的漸進式整合。支援 WebMCP 的瀏覽器會在頁面載入後註冊三個唯讀工具：
+網站提供符合 Google Chrome 官方規範的 WebMCP (Model Context Protocol) 漸進式整合。支援 WebMCP 的瀏覽器環境會在頁面載入後自動註冊結構化工具：
 
-- `search_taiwan_companies`：依公司登記名稱、股票代號或上市櫃簡稱搜尋。
-- `get_taiwan_company_profile`：讀取統編、資本額、代表人、地址與關係圖連結。
-- `get_taiwan_company_links`：讀取指定公司或法人的直接上游／下游關係。
+### 命令式工具 (Imperative Tools)
+- `search_taiwan_companies`：依公司登記名稱、股票代號（例如 `2330`）或上市櫃簡稱（例如 `台積電`）搜尋。
+- `get_taiwan_company_profile`：讀取公司統一編號、資本額、代表人姓名、所在地地址、上市櫃別與關係圖連結。
+- `get_taiwan_company_links`：讀取指定公司或法人的直接上游（`upstream`）與下游（`downstream`）關係。
+- `open_company_network`：在瀏覽器中直接導航並開啟指定公司的互動式關係圖（遵循 WebMCP 狀態同步最佳做法）。
 
-工具只回傳公開靜態資料，並標註 `readOnlyHint` 與 `untrustedContentHint`；沒有向跨來源公開工具，也沒有提供會修改資料的操作。若瀏覽器不支援 WebMCP，網站維持一般搜尋與圖表功能。根元素的 `data-webmcp` 屬性會顯示 `unsupported`、`loading`、`ready` 或 `error` 狀態。
+### 宣告式工具 (Declarative Tools)
+- `search_companies_form`（`/index` 目錄搜尋表單）：標註 `toolname` 與 `toolparamdescription`。
+- `quick_company_search`（頂部導覽列搜尋）：可讓 AI 代理直接發起跳轉搜尋。
+- `switch_relationship_view`（`/graph` 關係圖檢視切換）：讓 AI 代理切換全部／上游／下游檢視。
 
-WebMCP 目前仍是實驗性網頁標準。Chrome 150 使用 `document.modelContext`；程式也相容 Chrome 149 的 `navigator.modelContext`。Chrome 官方文件指出，`chrome://flags/#enable-webmcp-testing` 主要用於本機開發；正式網域需要加入 WebMCP Origin Trial 並提供 token，否則 `data-webmcp` 顯示 `unsupported` 是預期結果。可用 Model Context Tool Inspector 檢查工具註冊與輸出：<https://developer.chrome.com/docs/ai/webmcp?hl=zh-tw>。
+工具嚴格遵守 WebMCP 規範：
+- 註解標記 `readOnlyHint` 與 `untrustedContentHint`。
+- 符合字元預算約束（工具名稱/參數名稱 ≤ 30 字元、說明 ≤ 500 字元、參數說明 ≤ 150 字元、輸出 ≤ 1500 字元）。
+- 相容 Chrome 150 `document.modelContext` 與 Chrome 149 `navigator.modelContext`。
+- 根元素 `data-webmcp` 屬性會標示 `ready`、`loading`、`unsupported` 或 `error`，並透過 `data-webmcp-tools` 與 `data-webmcp-api` 公開註冊狀態。
+- 提供在線測試介面：可於 <https://taiwan-company-network.david888.com/skill/> 即時測試所有 WebMCP 工具。
 
 ### WebMCP 測試步驟
 
 1. 使用 Chrome 149 或更新版本；本機測試時開啟 `chrome://flags/#enable-webmcp-testing` 並重新啟動瀏覽器。
-2. 開啟 <https://taiwan-company-network.david888.com/>，等待頁面根元素的 `data-webmcp` 變成 `ready`；`data-webmcp-api` 會顯示使用 `document` 或 `navigator` API。
-3. 使用 Chrome WebMCP Model Context Tool Inspector 查看並呼叫上述工具，例如以 `2330` 搜尋台積電。
-4. 若正式站 `data-webmcp` 為 `unsupported`，需要先為 `taiwan-company-network.david888.com` 申請 WebMCP Origin Trial token；旗標只適合本機開發。原本的搜尋頁與公開 GET API 仍可正常使用。
+2. 開啟 <https://taiwan-company-network.david888.com/> 或本機開發伺服器，頁面根元素的 `data-webmcp` 會顯示 `ready`。
+3. 可使用 Chrome 官方的 [Model Context Tool Inspector](https://chromewebstore.google.com/detail/model-context-tool-inspec/gbpdfapgefenggkahomfgkhfehlcenpd?hl=zh-tw) 擴充功能，或直接在網站的 `/skill` 頁面中使用內建的 WebMCP Live Test Runner 進行測試。
+4. 正式公開網域若未掛載 Origin Trial Token，`data-webmcp` 會顯示 `unsupported`，這是 Chrome 安全機制的預期行為；原本的網頁搜尋介面與公開靜態 GET API 皆可正常運作。
 
 ### 🤖 Instructions for AI Agent Installation / AI 助手安裝指引
 
