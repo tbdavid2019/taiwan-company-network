@@ -5,27 +5,32 @@ import {
   buildCompanyToolIndex,
   createCompanyWebMcpTools,
   registerCompanyWebMcp,
+  resolveWebMcpModelContext,
 } from "@/lib/webmcp";
 
 const STATUS_ATTRIBUTE = "data-webmcp";
 
-function setWebMcpStatus(status, toolNames = []) {
+function setWebMcpStatus(status, toolNames = [], api = "none") {
   if (typeof document === "undefined") return;
   document.documentElement.setAttribute(STATUS_ATTRIBUTE, status);
   document.documentElement.setAttribute("data-webmcp-tools", toolNames.join(","));
+  document.documentElement.setAttribute("data-webmcp-api", api);
 }
 
 function WebMcpRegistration() {
   useEffect(() => {
-    const modelContext = document.modelContext;
-    if (!modelContext || typeof modelContext.registerTool !== "function") {
-      setWebMcpStatus("unsupported");
+    const { context: modelContext, api } = resolveWebMcpModelContext({
+      documentObject: document,
+      navigatorObject: navigator,
+    });
+    if (!modelContext) {
+      setWebMcpStatus("unsupported", [], api);
       return undefined;
     }
 
     const controller = new AbortController();
     let active = true;
-    setWebMcpStatus("loading");
+    setWebMcpStatus("loading", [], api);
 
     Promise.all([loadGraph(), loadCompanyDetails(), loadCompanyAliases()])
       .then(([graph, details, aliases]) => {
@@ -40,10 +45,10 @@ function WebMcpRegistration() {
       })
       .then((result) => {
         if (!active || !result) return;
-        setWebMcpStatus(result.error ? "error" : "ready", result.registered);
+        setWebMcpStatus(result.error ? "error" : "ready", result.registered, api);
       })
       .catch(() => {
-        if (active) setWebMcpStatus("error");
+        if (active) setWebMcpStatus("error", [], api);
       });
 
     return () => {

@@ -8,6 +8,7 @@ import {
   executeCompanyProfile,
   executeCompanyRelationships,
   registerCompanyWebMcp,
+  resolveWebMcpModelContext,
 } from "./webmcp.js";
 
 const index = buildCompanyToolIndex({
@@ -109,4 +110,22 @@ test("registerCompanyWebMcp gracefully reports unsupported browsers", async () =
   const result = await registerCompanyWebMcp([], {});
 
   assert.deepEqual(result, { supported: false, registered: [] });
+});
+
+test("resolveWebMcpModelContext prefers document API and supports Chrome 149 navigator fallback", () => {
+  const documentContext = { registerTool() {} };
+  const navigatorContext = { registerTool() {} };
+
+  assert.deepEqual(
+    resolveWebMcpModelContext({
+      documentObject: { modelContext: documentContext },
+      navigatorObject: { modelContext: navigatorContext },
+    }),
+    { context: documentContext, api: "document" },
+  );
+  assert.deepEqual(
+    resolveWebMcpModelContext({ navigatorObject: { modelContext: navigatorContext } }),
+    { context: navigatorContext, api: "navigator" },
+  );
+  assert.deepEqual(resolveWebMcpModelContext(), { context: null, api: "none" });
 });

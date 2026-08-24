@@ -1,6 +1,16 @@
 const DEFAULT_BASE_URL = "https://taiwan-company-network.david888.com/";
 const MAX_TOOL_OUTPUT_LENGTH = 1400;
 
+export function resolveWebMcpModelContext({ documentObject, navigatorObject } = {}) {
+  if (typeof documentObject?.modelContext?.registerTool === "function") {
+    return { context: documentObject.modelContext, api: "document" };
+  }
+  if (typeof navigatorObject?.modelContext?.registerTool === "function") {
+    return { context: navigatorObject.modelContext, api: "navigator" };
+  }
+  return { context: null, api: "none" };
+}
+
 function normalizeLookup(value) {
   return String(value || "")
     .normalize("NFKC")

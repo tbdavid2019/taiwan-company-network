@@ -10,6 +10,8 @@ All notable changes to this project are documented in this file.
 - Added graceful fallback for browsers without WebMCP and a `data-webmcp` runtime status attribute for inspection.
 - Added WebMCP tests, README setup instructions, and `llms.txt` integration notes.
 - Made listed-company alias refreshes keep the previous valid snapshot when an upstream market endpoint returns an invalid or unavailable response, so deployments can continue with the last known aliases.
+- Added Chrome 149 compatibility through a `navigator.modelContext` fallback while keeping `document.modelContext` as the preferred Chrome 150 API.
+- Clarified that the public domain requires a WebMCP Origin Trial token; the testing flag is intended for local development.
 
 ## 2026-07-24
 
