@@ -19,10 +19,12 @@ import {
 } from "lucide-react";
 
 import Header from "components/Headers/Header.jsx";
+import GraphShareDialog from "@/components/GraphShareDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { buildGraphShareUrl, uploadGraphToBox } from "@/lib/boxShare";
 import { loadCompanyDetails, loadGraph } from "@/lib/companyData";
 import { nodeSelectedOnPointerEnd, pointerMovementExceedsThreshold } from "@/lib/graphInteraction";
 import { calculateNodeRadii } from "@/lib/graphNodeSizing";
@@ -334,6 +336,22 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
       </defs>
       <rect aria-hidden="true" fill="url(#david888-watermark)" height={viewBox.height} width={viewBox.width} x={viewBox.x} y={viewBox.y} />
       <g transform={`translate(${pan.x} ${pan.y}) translate(${center.x} ${center.y}) scale(${zoom}) translate(${-center.x} ${-center.y})`}>
+      {data.nodes.map((node) => {
+        if (!node.data?.isRoot) return null;
+        const position = positions.get(node.id);
+        if (!position) return null;
+        const nodeRadius = node.data?.radius || 22;
+        return (
+          <circle
+            cx={position.x}
+            cy={position.y}
+            data-node-id={node.id}
+            fill="#f3d3c7"
+            key={`halo-${node.id}`}
+            r={nodeRadius + 12}
+          />
+        );
+      })}
       {data.edges.map((edge) => {
         const source = positions.get(edge.source);
         const target = positions.get(edge.target);
@@ -341,12 +359,13 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
         const dx = target.x - source.x;
         const dy = target.y - source.y;
         const distance = Math.hypot(dx, dy) || 1;
-        const sourceRadius = nodesById.get(edge.source)?.data?.radius || 16;
-        const targetRadius = nodesById.get(edge.target)?.data?.radius || 16;
+        const sourceRadius = nodesById.get(edge.source)?.data?.radius || (nodesById.get(edge.source)?.data?.isRoot ? 22 : 16);
+        const targetRadius = nodesById.get(edge.target)?.data?.radius || (nodesById.get(edge.target)?.data?.isRoot ? 22 : 16);
         return <line key={edge.id} markerEnd="url(#relationship-arrow)" stroke="#b7aba0" strokeWidth="2" x1={source.x + (dx / distance) * sourceRadius} x2={target.x - (dx / distance) * targetRadius} y1={source.y + (dy / distance) * sourceRadius} y2={target.y - (dy / distance) * targetRadius} />;
       })}
       {data.nodes.map((node) => {
         const position = positions.get(node.id);
+        if (!position) return null;
         const isRoot = node.data?.isRoot;
         const isCompany = node.data?.kind === "company";
         const fill = isRoot ? "#d97757" : isCompany ? "#2f7d6d" : "#877666";
@@ -363,7 +382,6 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
             onMouseEnter={() => onNodeHover(node.id)}
             onMouseLeave={() => onNodeHover("")}
           >
-            {isRoot && <circle cx={position.x} cy={position.y} fill="#f3d3c7" r={nodeRadius + 12} />}
             <circle cx={position.x} cy={position.y} fill={fill} r={nodeRadius} stroke="#fff" strokeWidth="3" />
             <g transform={`translate(${position.x - 43} ${badgeY})`}>
               <rect fill="#eef2ff" height="16" rx="8" stroke="#c7d2fe" width="40" />
@@ -403,6 +421,14 @@ function NetworkGraph() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSharing, setIsSharing] = useState(false);
   const [shareMessage, setShareMessage] = useState("");
+  const [shareDialogState, setShareDialogState] = useState({
+    isOpen: false,
+    blob: null,
+    imageUrl: null,
+    shareUrl: null,
+    uploadError: null,
+    isUploading: false,
+  });
   const [error, setError] = useState("");
   const requestedCompany = searchParams.get("company") || location.state?.company;
 
@@ -431,7 +457,6 @@ function NetworkGraph() {
     setExpandedNodes(new Set());
     setLocalZoom(1);
     setActiveNode("");
-    preparedShareRef.current = null;
     setShareMessage("");
   }, [company, mode]);
 
@@ -452,7 +477,6 @@ function NetworkGraph() {
   );
 
   useEffect(() => {
-    preparedShareRef.current = null;
     setShareMessage("");
   }, [graphData]);
 
@@ -567,46 +591,9 @@ function NetworkGraph() {
     requestAnimationFrame(() => graphRef.current?.fitView({ padding: 72 }, { duration: 220 }));
   };
 
-  const downloadGraphImage = (blob) => {
-    const imageUrl = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = imageUrl;
-    link.download = graphShareFileName(company);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(imageUrl);
-    setShareMessage("關係圖 PNG 已下載。");
-  };
-
-  const sharePreparedImage = async ({ blob, file }) => {
-    const shareData = {
-      files: [file],
-      title: `${company} - 888台灣的公司關係網`,
-      text: graphShareText(company),
-    };
-
-    if (navigator.share && navigator.canShare?.({ files: [file] })) {
-      await navigator.share(shareData);
-      setShareMessage("已開啟系統分享選單。");
-      return;
-    }
-
-    downloadGraphImage(blob);
-  };
-
   const shareGraph = async () => {
     if (isSharing) return;
     setShareMessage("");
-
-    if (preparedShareRef.current) {
-      try {
-        await sharePreparedImage(preparedShareRef.current);
-      } catch (shareError) {
-        if (shareError?.name !== "AbortError") setShareMessage("分享未開啟；請再按一次分享，或改用下載的 PNG。");
-      }
-      return;
-    }
 
     if (!graphShareRef.current) return;
     setIsSharing(true);
@@ -622,14 +609,42 @@ function NetworkGraph() {
       });
       if (!blob) throw new Error("Unable to create graph image.");
 
-      const file = new File([blob], graphShareFileName(company), { type: "image/png" });
-      preparedShareRef.current = { blob, file };
-      await sharePreparedImage({ blob, file });
-    } catch (shareError) {
-      if (shareError?.name === "AbortError") return;
-      if (preparedShareRef.current && shareError?.name === "NotAllowedError") {
-        setShareMessage("圖片已產生，請再按一次「分享圖片」開啟系統分享選單。");
+      const pageUrl = typeof window !== "undefined" ? window.location.href : buildGraphShareUrl(company);
+
+      // Open share dialog with local preview
+      setShareDialogState({
+        isOpen: true,
+        blob,
+        imageUrl: null,
+        shareUrl: null,
+        uploadError: null,
+        isUploading: true,
+      });
+
+      // Background upload to 888box
+      const boxResult = await uploadGraphToBox({
+        blob,
+        fileName: graphShareFileName(company),
+        company,
+        pageUrl,
+      });
+
+      if (boxResult.success) {
+        setShareDialogState((curr) => ({
+          ...curr,
+          imageUrl: boxResult.imageUrl,
+          shareUrl: boxResult.shareUrl,
+          isUploading: false,
+        }));
       } else {
+        setShareDialogState((curr) => ({
+          ...curr,
+          uploadError: boxResult.error,
+          isUploading: false,
+        }));
+      }
+    } catch (shareError) {
+      if (shareError?.name !== "AbortError") {
         setShareMessage("無法產生分享圖片，請稍後再試。");
       }
     } finally {
@@ -642,7 +657,7 @@ function NetworkGraph() {
 
   return (
     <div className="fade-in">
-      <Header actions={<div className="flex flex-wrap gap-2"><Button onClick={() => navigate("/index")} variant="outline"><ArrowLeft />Back to index</Button><Button disabled={isSharing} onClick={shareGraph}><Share2 />{isSharing ? "產生圖片…" : preparedShareRef.current ? "分享圖片" : "分享"}</Button></div>} title={company || "Relationship graph"} />
+      <Header actions={<div className="flex flex-wrap gap-2"><Button onClick={() => navigate("/index")} variant="outline"><ArrowLeft />Back to index</Button><Button disabled={isSharing} onClick={shareGraph}><Share2 />{isSharing ? "產生中…" : "分享"}</Button></div>} title={company || "Relationship graph"} />
       {shareMessage && <p aria-live="polite" className="mb-3 text-right text-xs text-muted-foreground">{shareMessage}</p>}
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <Card className="min-w-0 overflow-hidden" ref={graphShareRef}>
@@ -721,6 +736,17 @@ function NetworkGraph() {
           {activeNode && activeNodeConnections && <Card><CardHeader className="px-5 pb-3 pt-5"><CardTitle className="text-sm">Expanded entity</CardTitle><p className="text-xs leading-5 text-muted-foreground">Entities opened from the node you last clicked.</p></CardHeader><CardContent className="space-y-4 px-5 pb-5"><EntityDetails details={details} name={activeNode} /><Separator /><ExpansionEntityList icon={ArrowDownLeft} label="Upstream entities" names={activeNodeConnections.incoming} tone="text-blue-600" /><ExpansionEntityList icon={ArrowUpRight} label="Downstream entities" names={activeNodeConnections.outgoing} tone="text-teal-700" /></CardContent></Card>}
         </aside>
       </div>
+      <GraphShareDialog
+        blob={shareDialogState.blob}
+        company={company}
+        imageUrl={shareDialogState.imageUrl}
+        isOpen={shareDialogState.isOpen}
+        isUploading={shareDialogState.isUploading}
+        onClose={() => setShareDialogState((curr) => ({ ...curr, isOpen: false }))}
+        pageUrl={typeof window !== "undefined" ? window.location.href : buildGraphShareUrl(company)}
+        shareUrl={shareDialogState.shareUrl}
+        uploadError={shareDialogState.uploadError}
+      />
     </div>
   );
 }

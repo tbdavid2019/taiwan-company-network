@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-08-25
+
+- Fixed SVG relationship graph arrow rendering: reordered layer painting so the focus node's accent halo is drawn beneath edges, ensuring directional arrowheads pointing to the root company remain fully visible.
+- Integrated `888box` media hosting API (`https://box.david888.com/api.php?action=upload`) for relationship graph sharing. Captured snapshots automatically upload to 888box CDN to generate hosted WebP image URLs, share preview pages, and metadata with the company name and canonical site URL.
+- Added `GraphShareDialog` interactive share modal with live image preview, one-click share copy formatting, 888box CDN image URL copying, direct 888box view opening, PNG image download, and native system share fallback.
+- Added comprehensive unit tests for `boxShare` helper covering canonical URL generation, share copy formatting, and multipart upload error resilience.
+
 ## 2026-08-24
 
 - Enhanced Chrome WebMCP implementation with full imperative and declarative tool support according to the official specification.
