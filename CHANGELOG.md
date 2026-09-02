@@ -2,7 +2,17 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-02
+
+- Conducted comprehensive 7-layer security audit across repository and runtime containers.
+- Upgraded Dockerfile container base from deprecated Python 3.6 to `python:3.12-slim` to eliminate legacy OS vulnerabilities.
+- Updated dependencies to resolve high and moderate CVE advisories in transitive packages.
+- Added HTTP security headers middleware (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) in backend server.
+- Strengthened `.gitignore` rules against environment secrets, certificates, and private keys.
+- Established `.agents/skills/security-audit/SKILL.md` security review standard.
+
 ## 2026-08-25
+
 
 - Fixed SVG relationship graph arrow rendering: reordered layer painting so the focus node's accent halo is drawn beneath edges, ensuring directional arrowheads pointing to the root company remain fully visible.
 - Integrated `888box` media hosting API (`https://box.david888.com/api.php?action=upload`) for relationship graph sharing. Captured snapshots automatically upload to 888box CDN to generate hosted WebP image URLs, share preview pages, and metadata with the company name and canonical site URL.

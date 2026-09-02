@@ -39,6 +39,14 @@ def make_app(static_dir: str = None) -> Flask:
         else:
             return send_file(os.path.join(static_dir, 'index.html'))
 
+    @app.after_request
+    def set_security_headers(response: Response) -> Response:
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+        return response
+
     return app
 
 
