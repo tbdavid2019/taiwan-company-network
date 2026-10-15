@@ -16,7 +16,9 @@ import {
   Printer,
   RefreshCw,
   Share2,
+  Sparkles,
   UserRound,
+  X,
 } from "lucide-react";
 
 import Header from "components/Headers/Header.jsx";
@@ -25,6 +27,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { analyzeCompanyNode } from "@/lib/clefClient";
 import { buildGraphShareUrl, uploadGraphToBox } from "@/lib/boxShare";
 import { loadCompanyDetails, loadGraph } from "@/lib/companyData";
 import { nodeSelectedOnPointerEnd, pointerMovementExceedsThreshold } from "@/lib/graphInteraction";
@@ -110,7 +114,108 @@ function makeGraphData(network, root, mode, details, expandedNodes) {
   };
 }
 
-function EntityDetails({ name, details }) {
+function EntityAiDecision({ capital, connections, name }) {
+  const [analysis, setAnalysis] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!name) {
+      setAnalysis(null);
+      setIsLoading(false);
+      return;
+    }
+
+    let active = true;
+    setIsLoading(true);
+
+    analyzeCompanyNode({
+      name,
+      capital,
+      inDegree: connections?.incoming?.length || 0,
+      outDegree: connections?.outgoing?.length || 0,
+      upstreamSamples: connections?.incoming || [],
+      downstreamSamples: connections?.outgoing || [],
+    })
+      .then((result) => {
+        if (active) setAnalysis(result);
+      })
+      .catch(() => {
+        if (active) setAnalysis(null);
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [name, capital, connections]);
+
+  if (isLoading) {
+    return (
+      <div className="rounded-xl border border-border/70 bg-[#fffdf9] p-3.5 space-y-2">
+        <div className="flex items-center justify-between text-base">
+          <span className="flex items-center gap-1.5 font-medium text-muted-foreground">
+            <Sparkles className="size-3.5 animate-pulse text-[#d97757]" />
+            AI 角色決策推論中…
+          </span>
+          <span className="font-mono text-base text-muted-foreground/70">&lt;200ms</span>
+        </div>
+        <Skeleton className="h-5 w-3/4 rounded" />
+      </div>
+    );
+  }
+
+  if (!analysis?.role) return null;
+
+  const { role, strategicLevel } = analysis;
+
+  return (
+    <div className="rounded-xl border border-border/70 bg-[#fffdf9] p-3.5 space-y-2.5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5 text-base font-medium text-foreground">
+          <Sparkles className="size-3.5 text-[#d97757]" />
+          <span>結構角色洞察</span>
+        </div>
+        <span
+          className="cursor-help font-mono text-base text-muted-foreground/80"
+          title="Clef-Flash System-1 極速決策推論（自建零成本節點）"
+        >
+          Clef-Flash
+        </span>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-base font-medium ${role.accentClass}`}
+        >
+          {role.label}
+        </span>
+        {role.probability !== null && (
+          <span className="font-mono text-base text-muted-foreground" title="推論判定機率">
+            {role.probability}% 機率
+          </span>
+        )}
+      </div>
+
+      <p className="text-base leading-snug text-muted-foreground">
+        {role.description}
+      </p>
+
+      {strategicLevel && (
+        <div className="flex items-center justify-between border-t border-border/50 pt-2 text-base">
+          <span className="text-muted-foreground">網絡戰略等級</span>
+          <span className="flex items-center gap-1.5 font-medium text-foreground">
+            <span className="font-mono text-muted-foreground">Lv.{Math.round(strategicLevel.score)}</span>
+            <span>{strategicLevel.label}</span>
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EntityDetails({ connections, details, name }) {
   const info = details?.[name];
   return (
     <div className="space-y-4">
@@ -130,6 +235,11 @@ function EntityDetails({ name, details }) {
           <div className="flex items-start gap-2"><MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" /><span className="break-words">{info.公司所在地 || "Address unavailable"}</span></div>
         </div>
       ) : <p className="text-base leading-6 text-muted-foreground">This node is present in the relationship index but has no company detail record.</p>}
+      <EntityAiDecision
+        capital={info?.資本總額}
+        connections={connections}
+        name={name}
+      />
     </div>
   );
 }
@@ -460,7 +570,7 @@ function NetworkGraph() {
   useEffect(() => {
     setExpandedNodes(new Set());
     setLocalZoom(1);
-    setActiveNode("");
+    setActiveNode(company || "");
     setShareMessage("");
   }, [company, mode]);
 
@@ -655,7 +765,35 @@ function NetworkGraph() {
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 bg-[#fffdf9] px-5 py-3 text-base text-muted-foreground"><span>資料為公司／法人關係索引，不代表已驗證持股、控制或投資關係。</span><span>taiwan-company-network.david888.com</span></div>
         </Card>
         <aside className="relationship-details space-y-5">
-          {activeNode && activeNodeConnections && <Card><CardHeader className="px-5 pb-3 pt-5"><CardTitle className="text-base">Expanded entity</CardTitle><p className="text-base leading-6 text-muted-foreground">Entities opened from the node you last clicked.</p></CardHeader><CardContent className="space-y-4 px-5 pb-5"><EntityDetails details={details} name={activeNode} /><Separator /><ExpansionEntityList icon={ArrowDownLeft} label="Upstream entities" names={activeNodeConnections.incoming} tone="text-blue-600" /><ExpansionEntityList icon={ArrowUpRight} label="Downstream entities" names={activeNodeConnections.outgoing} tone="text-teal-700" /></CardContent></Card>}
+          {activeNode && activeNodeConnections && (
+            <Card>
+              <CardHeader className="flex flex-row items-start justify-between px-5 pb-3 pt-5">
+                <div>
+                  <CardTitle className="text-base">
+                    {activeNode === company ? "焦點實體" : "已選取實體"}
+                  </CardTitle>
+                  <p className="text-base leading-6 text-muted-foreground">
+                    {activeNode === company ? "目前關係圖的核心公司與結構分析。" : "點擊圖譜節點開啟之實體資訊與關聯。"}
+                  </p>
+                </div>
+                <Button
+                  aria-label="關閉側邊欄"
+                  className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
+                  onClick={() => setActiveNode("")}
+                  size="icon"
+                  variant="ghost"
+                >
+                  <X className="size-4" />
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4 px-5 pb-5">
+                <EntityDetails connections={activeNodeConnections} details={details} name={activeNode} />
+                <Separator />
+                <ExpansionEntityList icon={ArrowDownLeft} label="Upstream entities" names={activeNodeConnections.incoming} tone="text-blue-600" />
+                <ExpansionEntityList icon={ArrowUpRight} label="Downstream entities" names={activeNodeConnections.outgoing} tone="text-teal-700" />
+              </CardContent>
+            </Card>
+          )}
         </aside>
       </div>
       <GraphShareDialog
