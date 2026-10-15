@@ -156,12 +156,11 @@ function EntityAiDecision({ capital, connections, name }) {
   if (isLoading) {
     return (
       <div className="rounded-xl border border-border/70 bg-[#fffdf9] p-3.5 space-y-2">
-        <div className="flex items-center justify-between text-base">
+        <div className="flex items-center text-base">
           <span className="flex items-center gap-1.5 font-medium text-muted-foreground">
             <Sparkles className="size-3.5 animate-pulse text-[#d97757]" />
-            AI 角色決策推論中…
+            結構角色分析中…
           </span>
-          <span className="font-mono text-base text-muted-foreground/70">&lt;200ms</span>
         </div>
         <Skeleton className="h-5 w-3/4 rounded" />
       </div>
@@ -174,17 +173,9 @@ function EntityAiDecision({ capital, connections, name }) {
 
   return (
     <div className="rounded-xl border border-border/70 bg-[#fffdf9] p-3.5 space-y-2.5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-base font-medium text-foreground">
-          <Sparkles className="size-3.5 text-[#d97757]" />
-          <span>結構角色洞察</span>
-        </div>
-        <span
-          className="cursor-help font-mono text-base text-muted-foreground/80"
-          title="Clef-Flash System-1 極速決策推論（自建零成本節點）"
-        >
-          Clef-Flash
-        </span>
+      <div className="flex items-center gap-1.5 text-base font-medium text-foreground">
+        <Sparkles className="size-3.5 text-[#d97757]" />
+        <span>結構角色洞察</span>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -194,8 +185,8 @@ function EntityAiDecision({ capital, connections, name }) {
           {role.label}
         </span>
         {role.probability !== null && (
-          <span className="font-mono text-base text-muted-foreground" title="推論判定機率">
-            {role.probability}% 機率
+          <span className="font-mono text-base text-muted-foreground">
+            {role.probability}%
           </span>
         )}
       </div>

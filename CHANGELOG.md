@@ -9,9 +9,9 @@ All notable changes to this project are documented in this file.
   - 於 `/skill` 頁面新增「生態夥伴聯動：ToBid 政府標案 MCP」專區，提供 Claude Code 一鍵安裝指令（`claude mcp add --transport http tobid https://api.tobid.tw/mcp`）與跨工具 Prompt 範本。
   - 更新公開 `SKILL.md` 與 `references/api.md`，納入企業股權網絡與政府採購法第 101 條停權排查的聯合情資工作流。
   - 更新 `README.md` 說明標案查詢功能與 MCP 協同作業場景。
-- **Clef-Flash System-1 極速決策整合 (Corporate Role Inference)**:
-  - 整合自建 Clef-Flash 決策模型（推論延遲 <200ms），在節點點擊時自動推論集團戰略角色（母公司、合資、子公司、控股載體等）與戰略等級（Lv.0 - Lv.4）。
-  - 建立雙端點自動容錯機制（`PRIMARY_CLEF_URL` 與 `FALLBACK_CLEF_URL`）與完備單元測試。
+- **結構角色洞察整合 (Corporate Role Inference)**:
+  - 於節點點擊時自動分析集團戰略角色（母公司、合資、子公司、控股載體等）與網絡戰略等級（Lv.0 - Lv.4）。
+  - 建立雙端點自動容錯機制與完備單元測試。
 
 
 - Conducted comprehensive 7-layer security audit across repository and runtime containers.
