@@ -38,7 +38,7 @@ npm run build
 - 中文：Gen Jyuu Gothic Medium
 - 英文、數字與程式碼：JetBrains Mono Medium
 
-字體檔位於 `src/assets/fonts/custom/`，全域 CSS 會依字元自動套用對應字體。
+字體檔位於 `src/assets/fonts/custom/`，全域 CSS 會依字元自動套用對應字體。介面中文、圖上標籤與註記以至少 16px（12pt）顯示；互動圖在縮小時維持文字大小，手機可拖曳查看完整關係。
 
 ## Agent Skill
 
@@ -107,6 +107,7 @@ API base URL：`https://taiwan-company-network.david888.com/api/v1/`
 
 | Endpoint | 回傳內容 |
 | --- | --- |
+| `GET images/{prefix}/{image}.svg` | SVG 關係圖，請使用公司資料回傳的 `imageUrl` |
 | `GET index.json` | API 使用說明及公司名稱首字對應的 shard 路徑 |
 | `GET aliases.json` | TWSE／TPEx 股票代號與公司登記名稱 |
 | `GET companies/{shard}.json` | 該 shard 中的公司基本資料及上下游關係 |
@@ -139,7 +140,7 @@ LLM 查詢「中聯油脂股份有限公司」時會：
 }
 ```
 
-LLM 可利用 JSON 回答統編、資本額、代表人、地址及直接關係，並提供 `webUrl` 讓使用者開啟互動式關係圖。目前 API 不輸出圖片；若需要 PNG 或 SVG，必須另外實作圖形匯出功能。
+LLM 可利用 JSON 回答統編、資本額、代表人、地址及直接關係，並提供 `webUrl` 讓使用者開啟互動式關係圖。API 另提供 `imageUrl`：具有直接關係的公司可取得建置時產生的 SVG 圖片；無直接關係時為 `null`。每側最多顯示 12 筆並標示省略數，完整關係仍以 JSON 為準。SVG 原始尺寸的文字至少為 16px（12pt）；縮小圖片時，文字會隨圖片縮放。網頁的「分享」功能另可下載 PNG。新增圖片需在新版建置部署後使用。
 
 OpenAPI：<https://taiwan-company-network.david888.com/openapi.json>
 

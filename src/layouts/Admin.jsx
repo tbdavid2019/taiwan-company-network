@@ -21,7 +21,7 @@ function Admin() {
         <AdminNavbar onMenuClick={() => setSidebarOpen(true)} />
 
         <main className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
-          <Suspense fallback={<div className="flex min-h-[50vh] items-center justify-center text-sm text-muted-foreground">Loading view…</div>}>
+          <Suspense fallback={<div className="flex min-h-[50vh] items-center justify-center text-base text-muted-foreground">Loading view…</div>}>
             <Routes>
               {routes.map((route) => (
                 <Route

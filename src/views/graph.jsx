@@ -117,17 +117,17 @@ function EntityDetails({ name, details }) {
           {info ? <Building2 className="size-4" /> : <Compass className="size-4" />}
         </span>
         <div className="min-w-0">
-          <p className="break-words text-sm font-semibold leading-5">{name}</p>
+          <p className="break-words text-base font-semibold leading-6">{name}</p>
           <Badge className="mt-1" variant="outline">{info ? "Company record" : "Network entity"}</Badge>
         </div>
       </div>
       {info ? (
-        <div className="space-y-3 text-xs">
+        <div className="space-y-3 text-base">
           <div className="flex items-start gap-2"><span className="w-24 shrink-0 text-muted-foreground">Capital</span><span className="font-medium">NT$ {formatCapital(info.資本總額)}</span></div>
           <div className="flex items-start gap-2"><UserRound className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" /><span className="break-words">{info.代表人姓名 || "Representative unavailable"}</span></div>
           <div className="flex items-start gap-2"><MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" /><span className="break-words">{info.公司所在地 || "Address unavailable"}</span></div>
         </div>
-      ) : <p className="text-xs leading-5 text-muted-foreground">This node is present in the relationship index but has no company detail record.</p>}
+      ) : <p className="text-base leading-6 text-muted-foreground">This node is present in the relationship index but has no company detail record.</p>}
     </div>
   );
 }
@@ -140,16 +140,16 @@ function ExpansionEntityList({ icon: Icon, label, names, tone }) {
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+      <div className="mb-2 flex items-center justify-between gap-3 text-base">
         <span className="flex items-center gap-1.5 font-medium"><Icon className={`size-3.5 ${tone}`} />{label}</span>
         <Badge variant="secondary">{names.length}</Badge>
       </div>
-      {names.length === 0 ? <p className="text-xs text-muted-foreground">No direct entities in this direction.</p> : (
+      {names.length === 0 ? <p className="text-base text-muted-foreground">No direct entities in this direction.</p> : (
         <>
           <ul className="space-y-1.5">
-            {visibleNames.map((name) => <li className="truncate rounded-md bg-muted/50 px-2 py-1.5 text-xs" key={name}>{name}</li>)}
+            {visibleNames.map((name) => <li className="truncate rounded-md bg-muted/50 px-2 py-1.5 text-base" key={name}>{name}</li>)}
           </ul>
-          {names.length > 8 && <Button className="mt-2 h-7 px-2 text-[11px]" onClick={() => setShowAll((value) => !value)} variant="ghost">{showAll ? "Show less" : `Show all ${names.length}`}</Button>}
+          {names.length > 8 && <Button className="mt-2 h-7 px-2 text-base" onClick={() => setShowAll((value) => !value)} variant="ghost">{showAll ? "Show less" : `Show all ${names.length}`}</Button>}
         </>
       )}
     </div>
@@ -164,6 +164,16 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
   const otherNodes = data.nodes.filter((node) => node.id !== root?.id);
   const nodesById = new Map(data.nodes.map((node) => [node.id, node]));
   const svgRef = useRef(null);
+  const [viewportSize, setViewportSize] = useState({ width: 1200, height: 720 });
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return undefined;
+    const observer = new ResizeObserver(([entry]) => {
+      setViewportSize({ width: entry.contentRect.width, height: entry.contentRect.height });
+    });
+    observer.observe(svg);
+    return () => observer.disconnect();
+  }, []);
   const dragRef = useRef(null);
   const gestureRef = useRef(null);
   const pointersRef = useRef(new Map());
@@ -206,7 +216,13 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
   const maxX = Math.max(...defaultPoints.map((point) => point.x)) + 100;
   const minY = Math.min(...defaultPoints.map((point) => point.y)) - 100;
   const maxY = Math.max(...defaultPoints.map((point) => point.y)) + 100;
-  const viewBox = { x: minX, y: minY, width: Math.max(260, maxX - minX), height: Math.max(220, maxY - minY) };
+  const viewBox = viewportSize.width < 600
+    ? { x: center.x - viewportSize.width / 2, y: center.y - viewportSize.height / 2, width: Math.max(1, viewportSize.width), height: Math.max(1, viewportSize.height) }
+    : { x: minX, y: minY, width: Math.max(260, maxX - minX), height: Math.max(220, maxY - minY) };
+
+  // Compensate for both the SVG viewBox and interactive zoom: text stays >= 16 CSS px.
+  const viewportScale = Math.min(viewportSize.width / viewBox.width, viewportSize.height / viewBox.height);
+  const labelScale = Math.max(1, 1 / Math.max(0.01, viewportScale * zoom));
 
   const viewportPosition = (event) => {
     const rect = svgRef.current?.getBoundingClientRect();
@@ -370,10 +386,15 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
         const isCompany = node.data?.kind === "company";
         const fill = isRoot ? "#d97757" : isCompany ? "#2f7d6d" : "#877666";
         const label = String(node.data?.name || node.id);
+        const labelLines = Array.from(label).reduce((lines, char, index) => {
+          if (index % 10 === 0) lines.push("");
+          lines[lines.length - 1] += char;
+          return lines;
+        }, []);
         const upstreamCount = node.data?.upstreamCount || 0;
         const downstreamCount = node.data?.downstreamCount || 0;
         const nodeRadius = node.data?.radius || (isRoot ? 22 : 16);
-        const badgeY = position.y - nodeRadius - 17;
+        const badgeY = position.y - nodeRadius - 28 * labelScale;
         return (
           <g
             className="cursor-grab active:cursor-grabbing"
@@ -383,15 +404,15 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
             onMouseLeave={() => onNodeHover("")}
           >
             <circle cx={position.x} cy={position.y} fill={fill} r={nodeRadius} stroke="#fff" strokeWidth="3" />
-            <g transform={`translate(${position.x - 43} ${badgeY})`}>
-              <rect fill="#eef2ff" height="16" rx="8" stroke="#c7d2fe" width="40" />
-              <text fill="#4f46e5" fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize="10" fontWeight="600" textAnchor="middle" x="20" y="11">上 {upstreamCount}</text>
+            <g transform={`translate(${position.x - 67 * labelScale} ${badgeY}) scale(${labelScale})`}>
+              <rect fill="#eef2ff" height="24" rx="12" stroke="#c7d2fe" width="64" />
+              <text fill="#4f46e5" fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize="16" fontWeight="600" textAnchor="middle" x="32" y="17">上 {upstreamCount}</text>
             </g>
-            <g transform={`translate(${position.x + 3} ${badgeY})`}>
-              <rect fill="#e7f6f1" height="16" rx="8" stroke="#a7e3d3" width="40" />
-              <text fill="#18765f" fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize="10" fontWeight="600" textAnchor="middle" x="20" y="11">下 {downstreamCount}</text>
+            <g transform={`translate(${position.x + 3 * labelScale} ${badgeY}) scale(${labelScale})`}>
+              <rect fill="#e7f6f1" height="24" rx="12" stroke="#a7e3d3" width="64" />
+              <text fill="#18765f" fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize="16" fontWeight="600" textAnchor="middle" x="32" y="17">下 {downstreamCount}</text>
             </g>
-            <text fill={isRoot ? "#9a3412" : "#3f3933"} fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize={isRoot ? 16 : 12} fontWeight={isRoot ? 600 : 500} textAnchor="middle" x={position.x} y={position.y + nodeRadius + (isRoot ? 26 : 22)}>{label}</text>
+            <text fill={isRoot ? "#9a3412" : "#3f3933"} fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize={(isRoot ? 18 : 16) * labelScale} fontWeight={isRoot ? 600 : 500} textAnchor="middle" x={position.x} y={position.y + nodeRadius + (isRoot ? 28 : 24) * labelScale}>{labelLines.map((line, index) => <tspan dy={index === 0 ? 0 : 22 * labelScale} key={index} x={position.x}>{line}</tspan>)}</text>
           </g>
         );
       })}
@@ -514,7 +535,11 @@ function NetworkGraph() {
       padding: 72,
       zoomRange: [0.5, 3],
       animation: false,
-      behaviors: ["drag-canvas", "zoom-canvas", "drag-element-force"],
+      // G6 keeps label shapes at their screen size across zoom levels.
+      // https://g6.antv.antgroup.com/en/manual/behavior/fix-element-size
+      behaviors: ["drag-canvas", "zoom-canvas", "drag-element-force", {
+        type: "fix-element-size", enable: true, state: "", node: { shape: "label" }, edgeFilter: () => false,
+      }],
       layout: {
         type: "d3-force",
         link: { distance: 150 },
@@ -535,11 +560,11 @@ function NetworkGraph() {
             label: true,
             labelText: `${String(data.name || datum.id)}\n上 ${data.upstreamCount || 0} · 下 ${data.downstreamCount || 0}`,
             labelFill: isRoot ? "#9a3412" : "#3f3933",
-            labelFontSize: isRoot ? 14 : 12,
+            labelFontSize: isRoot ? 18 : 16,
             labelFontWeight: isRoot ? 600 : 400,
             labelPlacement: "bottom",
             labelOffsetY: 8,
-            labelMaxWidth: 180,
+            labelMaxWidth: 320,
             labelWordWrap: true,
           };
         },
@@ -652,13 +677,13 @@ function NetworkGraph() {
     }
   };
 
-  if (isLoading) return <div className="flex min-h-[70vh] flex-col items-center justify-center gap-3 text-muted-foreground"><LoaderCircle className="size-8 animate-spin text-primary" /><p className="text-sm">Loading relationship data…</p></div>;
-  if (error) return <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-6 text-sm text-destructive">{error}</div>;
+  if (isLoading) return <div className="flex min-h-[70vh] flex-col items-center justify-center gap-3 text-muted-foreground"><LoaderCircle className="size-8 animate-spin text-primary" /><p className="text-base">Loading relationship data…</p></div>;
+  if (error) return <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-6 text-base text-destructive">{error}</div>;
 
   return (
     <div className="fade-in">
       <Header actions={<div className="flex flex-wrap gap-2"><Button onClick={() => navigate("/index")} variant="outline"><ArrowLeft />Back to index</Button><Button disabled={isSharing} onClick={shareGraph}><Share2 />{isSharing ? "產生中…" : "分享"}</Button></div>} title={company || "Relationship graph"} />
-      {shareMessage && <p aria-live="polite" className="mb-3 text-right text-xs text-muted-foreground">{shareMessage}</p>}
+      {shareMessage && <p aria-live="polite" className="mb-3 text-right text-base text-muted-foreground">{shareMessage}</p>}
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <Card className="min-w-0 overflow-hidden" ref={graphShareRef}>
           <CardHeader className="border-b border-border/70 bg-muted/20 px-5 py-4 sm:px-6">
@@ -694,7 +719,7 @@ function NetworkGraph() {
                   <Network className="size-4 text-primary" />
                   {company} · {currentView?.label}
                 </CardTitle>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1 text-base text-muted-foreground">
                   {graphData.nodes.length} nodes · {graphData.edges.length} links · 圓球大小為此視圖中的相對資本額
                 </p>
               </div>
@@ -720,20 +745,20 @@ function NetworkGraph() {
               <div className="absolute inset-0 z-10 flex items-center justify-center p-6">
                 <div className="max-w-sm rounded-2xl border border-border/80 bg-background/95 p-6 text-center shadow-sm">
                   <span className="mx-auto flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary"><Building2 className="size-5" /></span>
-                  <p className="mt-3 text-sm font-semibold">尚無可視化的法人關係</p>
-                  <p className="mt-2 text-xs leading-5 text-muted-foreground">{company} 已有公司登記資料，但目前關係索引沒有可連出的法人代表紀錄，因此沒有邊可以畫出。</p>
+                  <p className="mt-3 text-base font-semibold">尚無可視化的法人關係</p>
+                  <p className="mt-2 text-base leading-6 text-muted-foreground">{company} 已有公司登記資料，但目前關係索引沒有可連出的法人代表紀錄，因此沒有邊可以畫出。</p>
                 </div>
               </div>
             )}
             {hoveredNode && <div className="pointer-events-none absolute right-4 top-4 z-10 w-[min(22rem,calc(100%-2rem))] rounded-xl border border-border/80 bg-background/95 p-4 shadow-xl backdrop-blur" data-share-exclude="true"><EntityDetails details={details} name={hoveredNode} /></div>}
-            {useLocalRelationshipMap && graphData.edges.length > 0 && <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-md border border-border/70 bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur sm:hidden" data-share-exclude="true">拖曳移動 · 雙指縮放</div>}
-            <div className="absolute bottom-4 left-4 z-10 hidden items-center gap-2 rounded-lg border border-border/70 bg-[#fffdf9]/95 px-3 py-2 text-[11px] text-muted-foreground shadow-sm backdrop-blur sm:flex"><span className="size-2 rounded-full bg-[#d97757]" /> Focus <span className="size-2 rounded-full bg-[#2f7d6d]" /> Company <span className="size-2 rounded-full bg-[#877666]" /> Entity <span>· 拖曳空白處移動畫布、雙指縮放</span> {expandedNodes.size > 0 && <span>· {expandedNodes.size} expanded</span>}</div>
+            {useLocalRelationshipMap && graphData.edges.length > 0 && <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-md border border-border/70 bg-background/90 px-2 py-1 text-base text-muted-foreground shadow-sm backdrop-blur sm:hidden" data-share-exclude="true">拖曳查看完整關係 · 雙指縮放</div>}
+            <div className="absolute bottom-4 left-4 z-10 hidden items-center gap-2 rounded-lg border border-border/70 bg-[#fffdf9]/95 px-3 py-2 text-base text-muted-foreground shadow-sm backdrop-blur sm:flex"><span className="size-2 rounded-full bg-[#d97757]" /> Focus <span className="size-2 rounded-full bg-[#2f7d6d]" /> Company <span className="size-2 rounded-full bg-[#877666]" /> Entity <span>· 拖曳空白處移動畫布、雙指縮放</span> {expandedNodes.size > 0 && <span>· {expandedNodes.size} expanded</span>}</div>
             <div className="absolute bottom-4 right-4 z-10 flex gap-1 rounded-lg border border-border/70 bg-background/90 p-1 shadow-sm backdrop-blur" data-share-exclude="true"><Button aria-label="Zoom out" onClick={() => zoom(0.8)} size="icon" variant="ghost"><Minus /></Button><Button aria-label="Reset graph expansion" onClick={resetGraph} size="icon" variant="ghost"><RefreshCw /></Button><Button aria-label="Zoom in" onClick={() => zoom(1.2)} size="icon" variant="ghost"><Plus /></Button></div>
           </div></CardContent>
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 bg-[#fffdf9] px-5 py-3 text-[11px] text-muted-foreground"><span>資料為公司／法人關係索引，不代表已驗證持股、控制或投資關係。</span><span>taiwan-company-network.david888.com</span></div>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 bg-[#fffdf9] px-5 py-3 text-base text-muted-foreground"><span>資料為公司／法人關係索引，不代表已驗證持股、控制或投資關係。</span><span>taiwan-company-network.david888.com</span></div>
         </Card>
         <aside className="space-y-5">
-          {activeNode && activeNodeConnections && <Card><CardHeader className="px-5 pb-3 pt-5"><CardTitle className="text-sm">Expanded entity</CardTitle><p className="text-xs leading-5 text-muted-foreground">Entities opened from the node you last clicked.</p></CardHeader><CardContent className="space-y-4 px-5 pb-5"><EntityDetails details={details} name={activeNode} /><Separator /><ExpansionEntityList icon={ArrowDownLeft} label="Upstream entities" names={activeNodeConnections.incoming} tone="text-blue-600" /><ExpansionEntityList icon={ArrowUpRight} label="Downstream entities" names={activeNodeConnections.outgoing} tone="text-teal-700" /></CardContent></Card>}
+          {activeNode && activeNodeConnections && <Card><CardHeader className="px-5 pb-3 pt-5"><CardTitle className="text-base">Expanded entity</CardTitle><p className="text-base leading-6 text-muted-foreground">Entities opened from the node you last clicked.</p></CardHeader><CardContent className="space-y-4 px-5 pb-5"><EntityDetails details={details} name={activeNode} /><Separator /><ExpansionEntityList icon={ArrowDownLeft} label="Upstream entities" names={activeNodeConnections.incoming} tone="text-blue-600" /><ExpansionEntityList icon={ArrowUpRight} label="Downstream entities" names={activeNodeConnections.outgoing} tone="text-teal-700" /></CardContent></Card>}
         </aside>
       </div>
       <GraphShareDialog

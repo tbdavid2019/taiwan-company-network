@@ -2,25 +2,35 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Taiwan Company Network Static GET API",
-    "version": "1.0.0",
-    "description": "Public read-only static JSON API. Relationship links are not independently verified ownership claims."
+    "version": "1.1.0",
+    "description": "Public read-only static JSON API with pre-rendered SVG relationship overviews. Relationship links are not independently verified ownership claims."
   },
   "servers": [
-    { "url": "https://taiwan-company-network.david888.com/api/v1" }
+    {
+      "url": "https://taiwan-company-network.david888.com/api/v1"
+    }
   ],
   "paths": {
     "/index.json": {
       "get": {
         "operationId": "getApiIndex",
         "summary": "Get API instructions and company shard routing",
-        "responses": { "200": { "description": "Shard index" } }
+        "responses": {
+          "200": {
+            "description": "Shard index"
+          }
+        }
       }
     },
     "/aliases.json": {
       "get": {
         "operationId": "getCompanyAliases",
         "summary": "Get TWSE and TPEx stock-code aliases",
-        "responses": { "200": { "description": "Stock-code aliases" } }
+        "responses": {
+          "200": {
+            "description": "Stock-code aliases"
+          }
+        }
       }
     },
     "/companies/{shard}.json": {
@@ -33,10 +43,87 @@
             "in": "path",
             "required": true,
             "description": "Shard identifier obtained from index.json; do not guess it.",
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
-        "responses": { "200": { "description": "Company records and direct relationships" } }
+        "responses": {
+          "200": {
+            "description": "Company records and direct relationships",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "webUrl": {
+                            "type": "string",
+                            "format": "uri"
+                          },
+                          "imageUrl": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "uri",
+                            "description": "SVG overview URL; null when no direct relationships are available."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/images/{prefix}/{image}.svg": {
+      "get": {
+        "operationId": "getCompanyGraphImage",
+        "summary": "Get a pre-rendered direct relationship overview",
+        "description": "Follow imageUrl in company records. Each direction shows at most 12 links with omitted counts; companies without links have imageUrl=null. Native image text is at least 16px (12pt).",
+        "parameters": [
+          {
+            "name": "prefix",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{2}$"
+            }
+          },
+          {
+            "name": "image",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SVG relationship overview",
+            "content": {
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Image does not exist"
+          }
+        }
       }
     }
   }

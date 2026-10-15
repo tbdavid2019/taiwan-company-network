@@ -26,7 +26,7 @@ function NetworkStat({ icon: Icon, label, value }) {
       </span>
       <div>
         <p className="text-lg font-semibold tracking-tight">{value.toLocaleString()}</p>
-        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-base text-muted-foreground">{label}</p>
       </div>
     </div>
   );
@@ -41,15 +41,15 @@ function CompanyCard({ aliases, listing, name, connected, hasCompanyRecord, onCl
     >
       <span className="min-w-0">
         <span className="flex items-center gap-2">
-          <span className="truncate text-sm font-medium text-foreground">{name || "Unnamed entity"}</span>
-          {listing && <Badge className="shrink-0 font-mono text-[10px]" variant="secondary">{listing.code}</Badge>}
+          <span className="truncate text-base font-medium text-foreground">{name || "Unnamed entity"}</span>
+          {listing && <Badge className="shrink-0 font-mono text-base" variant="secondary">{listing.code}</Badge>}
         </span>
-        <span className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+        <span className="mt-1 flex items-center gap-1.5 text-base text-muted-foreground">
           <span className={`size-1.5 rounded-full ${connected ? "bg-emerald-500" : "bg-slate-300"}`} />
           {connected ? "Connected entity" : hasCompanyRecord ? "Company record" : "Indexed entity"}
         </span>
         {aliases.length > 0 && (
-          <span className="mt-1 block truncate text-xs text-primary">{aliases.join(" · ")}</span>
+          <span className="mt-1 block truncate text-base text-primary">{aliases.join(" · ")}</span>
         )}
       </span>
       <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition group-hover:text-primary" />
@@ -200,7 +200,7 @@ function CompanyList() {
                 <Building2 className="size-4 text-primary" />
                 Company and entity index
               </CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-base text-muted-foreground">
                 {query ? `${filteredEntities.length.toLocaleString()} matches` : "Search company records and the relationship index"}
               </p>
             </div>
@@ -260,7 +260,7 @@ function CompanyList() {
           )}
 
           {!isLoading && error && (
-            <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-5 text-sm text-destructive">
+            <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-5 text-base text-destructive">
               {error}
             </div>
           )}
@@ -269,7 +269,7 @@ function CompanyList() {
             <div className="rounded-xl border border-dashed border-border p-12 text-center">
               <Search className="mx-auto size-8 text-muted-foreground" />
               <p className="mt-3 font-medium">No entities found</p>
-              <p className="mt-1 text-sm text-muted-foreground">Try a shorter or different search term.</p>
+              <p className="mt-1 text-base text-muted-foreground">Try a shorter or different search term.</p>
             </div>
           )}
 
@@ -307,7 +307,7 @@ function CompanyList() {
         </CardContent>
       </Card>
 
-      <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+      <div className="mt-4 flex items-center justify-between text-base text-muted-foreground">
         <span>Search includes company records and the relationship index.</span>
         <Badge className="hidden sm:inline-flex" variant="outline">Open data explorer</Badge>
       </div>

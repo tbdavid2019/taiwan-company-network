@@ -54,7 +54,7 @@ function AdminNavbar({ onMenuClick }) {
     <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur-xl">
       <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
         <Button aria-label="Open navigation" className="lg:hidden" onClick={onMenuClick} size="icon" variant="outline"><Menu /></Button>
-        <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-2 text-sm sm:flex">
+        <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-2 text-base sm:flex">
           <Link className="font-medium text-muted-foreground transition-colors hover:text-foreground" to="/index">Companies</Link>
           {isGraph && <><span className="text-muted-foreground">/</span><span className="text-muted-foreground">Relationship graph</span></>}
           {company && <><span className="text-muted-foreground">/</span><span className="max-w-52 truncate font-medium">{company}</span></>}
@@ -88,7 +88,7 @@ function AdminNavbar({ onMenuClick }) {
           {query && <Button aria-label="Clear company search" className="absolute right-0 top-0 h-9 w-9 text-muted-foreground" onClick={() => setQuery("")} size="icon" type="button" variant="ghost"><X className="size-4" /></Button>}
           {matches.length > 0 && (
             <div className="absolute left-0 right-0 top-11 z-50 overflow-hidden rounded-xl border border-border bg-popover p-1 shadow-xl">
-              {matches.map((name) => <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-muted" key={name} onClick={() => openCompany(name)} type="button"><Building2 className="size-4 shrink-0 text-muted-foreground" /><span className="truncate">{name}</span></button>)}
+              {matches.map((name) => <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-base hover:bg-muted" key={name} onClick={() => openCompany(name)} type="button"><Building2 className="size-4 shrink-0 text-muted-foreground" /><span className="truncate">{name}</span></button>)}
             </div>
           )}
         </form>

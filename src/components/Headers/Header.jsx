@@ -6,7 +6,7 @@ function Header({ breadcrumbs = [], eyebrow, title, description, actions }) {
     <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end">
       <div>
         {breadcrumbs.length > 0 && (
-          <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-2 text-base text-muted-foreground">
             {breadcrumbs.map((item, index) => (
               <React.Fragment key={`${item.label}-${index}`}>
                 {index > 0 && <span aria-hidden="true">/</span>}
@@ -16,10 +16,10 @@ function Header({ breadcrumbs = [], eyebrow, title, description, actions }) {
           </nav>
         )}
         {eyebrow && (
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">{eyebrow}</p>
+          <p className="mb-2 text-base font-semibold uppercase tracking-[0.18em] text-primary">{eyebrow}</p>
         )}
         <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">{title}</h1>
-        {description && <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>}
+        {description && <p className="mt-2 max-w-2xl text-base leading-6 text-muted-foreground">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
     </div>

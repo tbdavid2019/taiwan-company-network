@@ -167,7 +167,7 @@ function Skill() {
                 <Sparkles className="size-4 text-primary" />
                 <CardTitle className="text-base">Chrome WebMCP 整合規範</CardTitle>
                 <Badge
-                  className="font-mono text-xs"
+                  className="font-mono text-base"
                   variant={mcpStatus === "ready" ? "default" : "secondary"}
                 >
                   {mcpStatus === "ready"
@@ -175,7 +175,7 @@ function Skill() {
                     : "WebMCP Experimental (Flags/Trial)"}
                 </Badge>
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-base text-muted-foreground">
                 依據{" "}
                 <a
                   className="inline-flex items-center gap-0.5 text-primary underline underline-offset-4"
@@ -189,7 +189,7 @@ function Skill() {
               </p>
             </div>
             <a
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+              className="inline-flex items-center gap-1.5 text-base font-medium text-muted-foreground hover:text-foreground"
               href="https://chromewebstore.google.com/detail/model-context-tool-inspec/gbpdfapgefenggkahomfgkhfehlcenpd?hl=zh-tw"
               rel="noreferrer"
               target="_blank"
@@ -201,7 +201,7 @@ function Skill() {
         <CardContent className="space-y-6 p-5 sm:p-6">
           {/* Imperative tools grid */}
           <div>
-            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-foreground">
               <Zap className="size-4 text-amber-500" />
               命令式工具 (Imperative Tools - document.modelContext)
             </h3>
@@ -213,17 +213,17 @@ function Skill() {
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-xs font-semibold text-primary">{tool.name}</span>
-                      <Badge className="text-[10px]" variant="outline">{tool.type}</Badge>
+                      <span className="font-mono text-base font-semibold text-primary">{tool.name}</span>
+                      <Badge className="text-base" variant="outline">{tool.type}</Badge>
                     </div>
-                    <p className="mt-2 text-xs leading-5 text-muted-foreground">{tool.description}</p>
+                    <p className="mt-2 text-base leading-6 text-muted-foreground">{tool.description}</p>
                   </div>
                   <div className="mt-4 flex items-center justify-between gap-2 border-t border-border/40 pt-3">
-                    <span className="font-mono text-[11px] text-muted-foreground">
+                    <span className="font-mono text-base text-muted-foreground">
                       範例: {JSON.stringify(tool.sample)}
                     </span>
                     <Button
-                      className="h-7 text-xs"
+                      className="h-7 text-base"
                       disabled={!toolIndex || isRunningTest}
                       onClick={() => runToolTest(tool.name)}
                       size="sm"
@@ -239,7 +239,7 @@ function Skill() {
 
           {/* Declarative tools */}
           <div>
-            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-foreground">
               <Terminal className="size-4 text-emerald-500" />
               宣告式表單工具 (Declarative Tools - HTML form & input annotations)
             </h3>
@@ -249,11 +249,11 @@ function Skill() {
                   className="rounded-xl border border-border/70 bg-muted/20 p-3.5"
                   key={tool.toolname}
                 >
-                  <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                  <span className="font-mono text-base font-semibold text-emerald-600 dark:text-emerald-400">
                     &lt;form toolname="{tool.toolname}"&gt;
                   </span>
-                  <p className="mt-1 text-[11px] font-medium text-foreground">{tool.location}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{tool.description}</p>
+                  <p className="mt-1 text-base font-medium text-foreground">{tool.location}</p>
+                  <p className="mt-1 text-base text-muted-foreground">{tool.description}</p>
                 </div>
               ))}
             </div>
@@ -264,19 +264,19 @@ function Skill() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2">
                 <Terminal className="size-4 text-blue-400" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                <span className="text-base font-semibold uppercase tracking-wider text-slate-300">
                   WebMCP Live Test Runner
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Input
-                  className="h-8 w-44 border-slate-700 bg-slate-900 font-mono text-xs text-slate-100 placeholder:text-slate-500"
+                  className="h-8 w-44 border-slate-700 bg-slate-900 font-mono text-base text-slate-100 placeholder:text-slate-500"
                   onChange={(e) => setTestQuery(e.target.value)}
                   placeholder="公司名稱或股號 (2330)"
                   value={testQuery}
                 />
                 <Button
-                  className="h-8 text-xs"
+                  className="h-8 text-base"
                   disabled={!toolIndex || isRunningTest}
                   onClick={() => runToolTest(selectedTool)}
                   size="sm"
@@ -286,11 +286,11 @@ function Skill() {
               </div>
             </div>
             {testOutput ? (
-              <pre className="mt-3 max-h-48 overflow-auto rounded-lg bg-slate-900/90 p-3 font-mono text-xs text-slate-200">
+              <pre className="mt-3 max-h-48 overflow-auto rounded-lg bg-slate-900/90 p-3 font-mono text-base text-slate-200">
                 <code>{testOutput}</code>
               </pre>
             ) : (
-              <p className="mt-2 text-xs text-slate-400">
+              <p className="mt-2 text-base text-slate-400">
                 點擊上方工具的「測試」按鈕，即可在當前瀏覽器環境直接執行 WebMCP 函式並檢視輸出。
               </p>
             )}
@@ -307,7 +307,7 @@ function Skill() {
                 <Bot className="size-4 text-primary" />
                 SKILL.md (遠端 HTTP GET Agent Skill 規範)
               </CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-base text-muted-foreground">
                 提供無瀏覽器環境之遠端 LLM 透過公開靜態 GET API 查詢臺灣公司資料。複製內容交給 LLM，或下載後安裝到 Agent 的 skills 目錄。
               </p>
             </div>
@@ -324,7 +324,7 @@ function Skill() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <pre className="max-h-[65vh] overflow-auto whitespace-pre-wrap break-words bg-slate-950 p-5 text-xs leading-6 text-slate-100 sm:p-6">
+          <pre className="max-h-[65vh] overflow-auto whitespace-pre-wrap break-words bg-slate-950 p-5 text-base leading-6 text-slate-100 sm:p-6">
             <code>{skillContent}</code>
           </pre>
         </CardContent>

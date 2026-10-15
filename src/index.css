@@ -21,6 +21,10 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+    --text-xs: max(1rem, 16px);
+    --text-xs--line-height: 1.5;
+    --text-sm: max(1rem, 16px);
+    --text-sm--line-height: 1.5;
     --font-heading: "JetBrains Mono", "Gen Jyuu Gothic", ui-sans-serif, system-ui, sans-serif;
     --font-sans: "JetBrains Mono", "Gen Jyuu Gothic", ui-sans-serif, system-ui, sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
@@ -138,6 +142,7 @@
     }
   html {
     @apply font-sans;
+    font-size: max(100%, 16px);
   }
   body {
     @apply bg-background text-foreground;

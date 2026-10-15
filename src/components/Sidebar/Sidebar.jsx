@@ -53,8 +53,8 @@ function Sidebar({ routes = [], isOpen, onClose }) {
               <Network className="size-4" />
             </span>
             <span>
-              <span className="block text-sm font-semibold tracking-tight">888台灣的公司關係網</span>
-              <span className="block text-[11px] text-slate-400">Entity explorer</span>
+              <span className="block text-base font-semibold tracking-tight">888台灣的公司關係網</span>
+              <span className="block text-base text-slate-400">Entity explorer</span>
             </span>
           </NavLink>
           <Button
@@ -69,7 +69,7 @@ function Sidebar({ routes = [], isOpen, onClose }) {
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-5">
-          <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          <p className="px-3 pb-2 text-base font-semibold uppercase tracking-[0.18em] text-slate-500">
             Explore
           </p>
           <nav className="space-y-1">
@@ -84,7 +84,7 @@ function Sidebar({ routes = [], isOpen, onClose }) {
               return (
                 <NavLink
                   className={({ isActive }) =>
-                    `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                    `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-base transition-colors ${
                       isActive
                         ? "bg-white/10 text-white shadow-sm"
                         : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-100"
@@ -109,22 +109,22 @@ function Sidebar({ routes = [], isOpen, onClose }) {
           {companyDetails && (
             <div className="mt-8">
               <Separator className="mb-5 bg-white/10" />
-              <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <p className="px-3 pb-2 text-base font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Selected entity
               </p>
               <Card className="border-white/10 bg-white/[0.06] text-slate-100 ring-0">
                 <CardHeader className="gap-2 px-4 pb-3 pt-4">
                   <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="line-clamp-2 text-sm text-white">
+                    <CardTitle className="line-clamp-2 text-base text-white">
                       {selectedCompany || "Company"}
                     </CardTitle>
                     <Badge className="shrink-0 border-blue-400/20 bg-blue-400/10 text-blue-200" variant="outline">
                       Entity
                     </Badge>
                   </div>
-                  <p className="font-mono text-[11px] text-slate-500">ID {companyDetails.id || "—"}</p>
+                  <p className="font-mono text-base text-slate-500">ID {companyDetails.id || "—"}</p>
                 </CardHeader>
-                <CardContent className="space-y-3 px-4 pb-4 text-xs">
+                <CardContent className="space-y-3 px-4 pb-4 text-base">
                   <div className="flex gap-2 text-slate-300">
                     <Landmark className="mt-0.5 size-3.5 shrink-0 text-slate-500" />
                     <span>Capital {formatCapital(companyDetails.資本總額)}</span>
@@ -145,20 +145,20 @@ function Sidebar({ routes = [], isOpen, onClose }) {
           {recentCompanies.length > 0 && (
             <div className="mt-8">
               <Separator className="mb-5 bg-white/10" />
-              <div className="mb-2 flex items-center gap-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <div className="mb-2 flex items-center gap-2 px-3 text-base font-semibold uppercase tracking-[0.18em] text-slate-500">
                 <Clock3 className="size-3" /> Recent
               </div>
               <div className="space-y-1">
                 {recentCompanies.map((entry) => (
                   <NavLink
-                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-400 transition hover:bg-white/[0.06] hover:text-white"
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-base text-slate-400 transition hover:bg-white/[0.06] hover:text-white"
                     key={entry.name}
                     onClick={onClose}
                     to={`/graph?company=${encodeURIComponent(entry.name)}`}
                   >
                     <Building2 className="size-3.5 shrink-0 text-slate-500" />
                     <span className="min-w-0 flex-1 truncate">{entry.name}</span>
-                    {entry.id && <span className="font-mono text-[10px] text-slate-600">{entry.id}</span>}
+                    {entry.id && <span className="font-mono text-base text-slate-600">{entry.id}</span>}
                   </NavLink>
                 ))}
               </div>

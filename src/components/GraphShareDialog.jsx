@@ -135,7 +135,7 @@ export function GraphShareDialog({
               <h2 className="text-base font-semibold" id="share-dialog-title">
                 分享關係圖
               </h2>
-              <p className="text-xs text-muted-foreground">{company || "888台灣公司關係網"}</p>
+              <p className="text-base text-muted-foreground">{company || "888台灣公司關係網"}</p>
             </div>
           </div>
           <Button
@@ -153,7 +153,7 @@ export function GraphShareDialog({
         <div className="space-y-5 overflow-y-auto p-5 sm:p-6">
           {/* Image preview & upload status badge */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center justify-between text-base">
               <span className="font-medium text-foreground">圖片預覽</span>
               {isUploading ? (
                 <Badge className="gap-1 text-muted-foreground" variant="secondary">
@@ -192,14 +192,14 @@ export function GraphShareDialog({
             {/* 888box Hosted Image URL */}
             {imageUrl && (
               <div className="rounded-xl border border-sky-100 bg-sky-50/60 p-3 dark:border-sky-900/50 dark:bg-sky-950/30">
-                <div className="mb-1.5 flex items-center justify-between text-xs">
+                <div className="mb-1.5 flex items-center justify-between text-base">
                   <span className="flex items-center gap-1.5 font-medium text-sky-800 dark:text-sky-200">
                     <ImageIcon className="size-3.5" />
                     888box 圖片網址 (WebP CDN)
                   </span>
                   {shareUrl && (
                     <a
-                      className="flex items-center gap-1 text-[11px] text-sky-600 hover:underline dark:text-sky-400"
+                      className="flex items-center gap-1 text-base text-sky-600 hover:underline dark:text-sky-400"
                       href={shareUrl}
                       rel="noopener noreferrer"
                       target="_blank"
@@ -211,13 +211,13 @@ export function GraphShareDialog({
                 </div>
                 <div className="flex items-center gap-2">
                   <input
-                    className="h-8 flex-1 rounded-lg border border-sky-200/80 bg-background px-2.5 text-xs text-foreground select-all focus:outline-hidden dark:border-sky-800"
+                    className="h-8 flex-1 rounded-lg border border-sky-200/80 bg-background px-2.5 text-base text-foreground select-all focus:outline-hidden dark:border-sky-800"
                     readOnly
                     type="text"
                     value={imageUrl}
                   />
                   <Button
-                    className="h-8 shrink-0 gap-1 text-xs"
+                    className="h-8 shrink-0 gap-1 text-base"
                     onClick={() => copyToClipboard(imageUrl, "image")}
                     size="sm"
                     variant="outline"
@@ -232,7 +232,7 @@ export function GraphShareDialog({
             {/* Site Page URL */}
             {pageUrl && (
               <div className="rounded-xl border border-border/70 bg-muted/20 p-3">
-                <div className="mb-1.5 flex items-center justify-between text-xs">
+                <div className="mb-1.5 flex items-center justify-between text-base">
                   <span className="flex items-center gap-1.5 font-medium text-foreground">
                     <Link2 className="size-3.5 text-primary" />
                     本站關係圖連結
@@ -240,13 +240,13 @@ export function GraphShareDialog({
                 </div>
                 <div className="flex items-center gap-2">
                   <input
-                    className="h-8 flex-1 rounded-lg border border-input bg-background px-2.5 text-xs text-foreground select-all focus:outline-hidden"
+                    className="h-8 flex-1 rounded-lg border border-input bg-background px-2.5 text-base text-foreground select-all focus:outline-hidden"
                     readOnly
                     type="text"
                     value={pageUrl}
                   />
                   <Button
-                    className="h-8 shrink-0 gap-1 text-xs"
+                    className="h-8 shrink-0 gap-1 text-base"
                     onClick={() => copyToClipboard(pageUrl, "page")}
                     size="sm"
                     variant="outline"
@@ -260,13 +260,13 @@ export function GraphShareDialog({
 
             {/* Complete Share Copy */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center justify-between text-base">
                 <span className="flex items-center gap-1.5 font-medium text-foreground">
                   <Sparkles className="size-3.5 text-amber-500" />
                   完整社群分享文案
                 </span>
                 <Button
-                  className="h-6 px-2 text-[11px]"
+                  className="h-6 px-2 text-base"
                   onClick={() => copyToClipboard(shareText, "text")}
                   size="sm"
                   variant="ghost"
@@ -276,7 +276,7 @@ export function GraphShareDialog({
                 </Button>
               </div>
               <textarea
-                className="w-full rounded-xl border border-border/70 bg-muted/30 p-2.5 text-xs leading-5 text-muted-foreground select-all focus:outline-hidden"
+                className="w-full rounded-xl border border-border/70 bg-muted/30 p-2.5 text-base leading-6 text-muted-foreground select-all focus:outline-hidden"
                 readOnly
                 rows={4}
                 value={shareText}
