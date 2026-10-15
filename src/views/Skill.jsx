@@ -2,11 +2,14 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Bot,
+  Building2,
   Check,
   Copy,
   Download,
   ExternalLink,
+  Landmark,
   Play,
+  ShieldCheck,
   Sparkles,
   Terminal,
   Zap,
@@ -76,6 +79,8 @@ const DECLARATIVE_TOOLS = [
 function Skill() {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [copiedCmd, setCopiedCmd] = useState(false);
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [mcpStatus, setMcpStatus] = useState("checking");
   const [mcpApi, setMcpApi] = useState("none");
   const [toolIndex, setToolIndex] = useState(null);
@@ -106,6 +111,19 @@ function Skill() {
     await navigator.clipboard.writeText(skillContent);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
+  };
+
+  const copyCmd = async () => {
+    await navigator.clipboard.writeText("claude mcp add --transport http tobid https://api.tobid.tw/mcp");
+    setCopiedCmd(true);
+    window.setTimeout(() => setCopiedCmd(false), 1800);
+  };
+
+  const copyPrompt = async () => {
+    const promptText = "請先透過 taiwan-company-network 查出目標企業的核心上下游子公司與關聯企業，接著使用 tobid MCP 的 vendor_report 與 vendor_compliance，分析這些關聯企業近年的政府標案得標總額、主要承辦部會，並檢查是否有任何採購法停權紀錄。";
+    await navigator.clipboard.writeText(promptText);
+    setCopiedPrompt(true);
+    window.setTimeout(() => setCopiedPrompt(false), 1800);
   };
 
   const downloadSkill = () => {
@@ -294,6 +312,125 @@ function Skill() {
                 點擊上方工具的「測試」按鈕，即可在當前瀏覽器環境直接執行 WebMCP 函式並檢視輸出。
               </p>
             )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Ecosystem Partner Section: ToBid MCP */}
+      <Card className="overflow-hidden border-border/80">
+        <CardHeader className="border-b border-border/70 bg-muted/20 px-5 py-5 sm:px-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <Landmark className="size-4 text-[#2f7d6d]" />
+                <CardTitle className="text-base">生態夥伴聯動：ToBid 政府標案 MCP</CardTitle>
+                <Badge className="font-mono text-base" variant="secondary">
+                  Streamable HTTP / Free
+                </Badge>
+              </div>
+              <p className="mt-1 text-base text-muted-foreground">
+                結合臺灣公開政府標案數據庫{" "}
+                <a
+                  className="inline-flex items-center gap-0.5 text-primary underline underline-offset-4"
+                  href="https://tobid.tw/guide/mcp"
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  ToBid (1,400 萬筆標案) <ExternalLink className="size-3" />
+                </a>
+                ，讓 AI 代理同時具備「企業集團股權結構」與「公部門採購得標情報」的全方位調查能力。
+              </p>
+            </div>
+            <a
+              className="inline-flex items-center gap-1.5 text-base font-medium text-muted-foreground hover:text-foreground"
+              href="https://tobid.tw/guide/mcp"
+              rel="noreferrer"
+              target="_blank"
+            >
+              ToBid MCP 設定指引 <ExternalLink className="size-3" />
+            </a>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6 p-5 sm:p-6">
+          {/* Capabilities Grid */}
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-border/70 bg-card p-4">
+              <div className="flex items-center gap-2 font-semibold text-foreground text-base">
+                <Building2 className="size-4 text-primary" />
+                <span>集團穿透 × 標案版圖</span>
+              </div>
+              <p className="mt-2 text-base leading-6 text-muted-foreground">
+                先由本專案解析集團旗艦核心與子公司群，再透過 ToBid <code>vendor_report</code> 查閱各子公司的歷年得標總額與常客部會。
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-border/70 bg-card p-4">
+              <div className="flex items-center gap-2 font-semibold text-foreground text-base">
+                <Sparkles className="size-4 text-amber-500" />
+                <span>同業競標 × 底價分析</span>
+              </div>
+              <p className="mt-2 text-base leading-6 text-muted-foreground">
+                分析合資企業與同業實體時，利用 ToBid <code>compare_vendors</code> 與 <code>price_analysis</code> 深入同場對抗紀錄與真實底價落點。
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-border/70 bg-card p-4">
+              <div className="flex items-center gap-2 font-semibold text-foreground text-base">
+                <ShieldCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
+                <span>法規合規 × 101 條停權</span>
+              </div>
+              <p className="mt-2 text-base leading-6 text-muted-foreground">
+                穿透複雜股權關聯，同步利用 ToBid <code>vendor_compliance</code> 檢驗各節點是否有政府採購法第 101 條拒絕往來或停權紀錄。
+              </p>
+            </div>
+          </div>
+
+          {/* Claude Code MCP Command Box */}
+          <div className="rounded-xl border border-border/80 bg-slate-950 p-4 text-slate-100">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2">
+                <Terminal className="size-4 text-emerald-400" />
+                <span className="text-base font-semibold uppercase tracking-wider text-slate-300">
+                  Claude Code / AI Client 終端機設定命令
+                </span>
+              </div>
+              <Button
+                className="h-7 text-base text-slate-200 hover:text-white"
+                onClick={copyCmd}
+                size="sm"
+                variant="ghost"
+              >
+                {copiedCmd ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
+                {copiedCmd ? "已複製命令" : "複製命令"}
+              </Button>
+            </div>
+            <pre className="mt-2 overflow-x-auto rounded-lg bg-slate-900/90 p-3 font-mono text-base text-emerald-300">
+              <code>claude mcp add --transport http tobid https://api.tobid.tw/mcp</code>
+            </pre>
+            <p className="mt-2 text-base text-slate-400">
+              Claude Desktop / Cursor / Windsurf 亦可直接以 Streamable HTTP 方式加入端點 <code>https://api.tobid.tw/mcp</code>。免 API Key、免註冊。
+            </p>
+          </div>
+
+          {/* Recommended Multi-Tool Prompt */}
+          <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <span className="text-base font-semibold text-foreground">
+                推薦雙工具協同提示詞 (Multi-Tool Prompt)
+              </span>
+              <Button
+                className="h-7 text-base"
+                onClick={copyPrompt}
+                size="sm"
+                variant="outline"
+              >
+                {copiedPrompt ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
+                {copiedPrompt ? "已複製 Prompt" : "複製 Prompt"}
+              </Button>
+            </div>
+            <p className="mt-2 rounded-lg border border-border/60 bg-background/80 p-3 text-base leading-6 text-foreground/90">
+              「請先透過 taiwan-company-network 查出目標企業的核心上下游子公司與關聯企業，接著使用 tobid MCP 的 vendor_report 與 vendor_compliance，分析這些關聯企業近年的政府標案得標總額、主要承辦部會，並檢查是否有任何採購法停權紀錄。」
+            </p>
           </div>
         </CardContent>
       </Card>

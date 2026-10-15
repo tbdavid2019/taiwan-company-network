@@ -48,3 +48,13 @@ For 中聯油脂股份有限公司:
 - Confirm every HTTP response is successful before using it.
 - Confirm the selected result matches the intended company.
 - State that relationships are index links, not independently verified ownership claims.
+
+## Ecosystem Integration: Government Procurement (ToBid MCP)
+
+When corporate group analysis requires government contracting and public procurement intelligence, pair this Skill with the free, public ToBid Procurement MCP:
+- **MCP Endpoint**: `https://api.tobid.tw/mcp` (Streamable HTTP, public, no registration or API key required)
+- **Setup for Claude Code**: `claude mcp add --transport http tobid https://api.tobid.tw/mcp`
+- **Multi-Tool Agent Workflow**:
+  1. Use this Skill's sharded GET API to uncover an enterprise's corporate network (parent flagship, operating subsidiaries, joint ventures).
+  2. Call ToBid MCP tools (`vendor_report`, `search_tenders`, `vendor_compliance`) on each entity to inspect historical government contract awards, top client agencies, bidding win-rates, and Public Procurement Act Article 101 sanction/debarment records.
+

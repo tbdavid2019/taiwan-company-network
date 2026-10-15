@@ -8,6 +8,8 @@ import {
   ArrowUpRight,
   Building2,
   Compass,
+  ExternalLink,
+  Landmark,
   LoaderCircle,
   MapPin,
   Minus,
@@ -215,6 +217,51 @@ function EntityAiDecision({ capital, connections, name }) {
   );
 }
 
+function EntityTenderIntelligence({ info, name }) {
+  const queryTarget = name || "";
+  const tobidSearchUrl = `https://tobid.tw/?q=${encodeURIComponent(queryTarget)}`;
+
+  return (
+    <div className="rounded-xl border border-border/70 bg-[#fffdf9] p-3.5 space-y-2.5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5 text-base font-medium text-foreground">
+          <Landmark className="size-3.5 text-[#2f7d6d]" />
+          <span>政府標案與採購歷程</span>
+        </div>
+        <span
+          className="cursor-help font-mono text-base text-muted-foreground/80"
+          title="收錄行政院公共工程委員會 1,400 萬筆政府標案分析資料"
+        >
+          ToBid
+        </span>
+      </div>
+
+      <p className="text-base leading-snug text-muted-foreground">
+        查詢歷年政府投標得標金額、主要承辦機關、同場競爭對手與底價分析。
+      </p>
+
+      <div className="flex flex-wrap items-center gap-2 pt-0.5">
+        <a
+          aria-label={`在 ToBid 查詢 ${name} 的政府標案紀錄`}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border/80 bg-background px-2.5 py-1.5 text-base font-medium text-foreground shadow-xs transition hover:border-border hover:bg-muted"
+          href={tobidSearchUrl}
+          rel="noreferrer"
+          target="_blank"
+        >
+          <span>查閱標案與得標紀錄</span>
+          <ExternalLink className="size-3.5 text-muted-foreground" />
+        </a>
+
+        {info?.id && (
+          <span className="font-mono text-base text-muted-foreground/70" title="公司統一編號">
+            統編 {info.id}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function EntityDetails({ connections, details, name }) {
   const info = details?.[name];
   return (
@@ -238,6 +285,10 @@ function EntityDetails({ connections, details, name }) {
       <EntityAiDecision
         capital={info?.資本總額}
         connections={connections}
+        name={name}
+      />
+      <EntityTenderIntelligence
+        info={info}
         name={name}
       />
     </div>

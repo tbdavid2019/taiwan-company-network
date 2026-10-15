@@ -16,6 +16,10 @@
 
 ![臺灣水泥與中成開發投資之結構角色洞察](docs/screenshots/company-network-ai-decision.png)
 
+### 政府標案與採購歷程整合
+
+節點詳細資訊抽屜內建 ToBid 政府標案歷程快速查詢，點擊即可無縫穿透至行政院公共工程委員會 1,400 萬筆公開決標資料庫，查閱該公司的公部門得標總額、主要承辦機關與投標對手。
+
 ### 手機版
 
 手機版圖表支援拖曳節點、拖曳空白處移動畫布，以及雙指縮放。
@@ -51,6 +55,19 @@ npm run build
 公開 Skill 頁面：<https://taiwan-company-network.david888.com/skill/>
 
 頁面內可直接閱讀、複製或下載 `SKILL.md`。Skill 會引導其他人的 LLM 以 HTTP GET 呼叫公開的靜態 JSON API；不需要 API key，也不使用 MCP。
+
+### 生態夥伴聯動：ToBid 政府標案 MCP
+
+進行臺灣企業深度調查時，推薦將本專案 Skill 與公開免費的 **ToBid 政府標案 MCP** 搭配使用：
+- **ToBid MCP 端點**：`https://api.tobid.tw/mcp`（Streamable HTTP，免費免註冊）
+- **Claude Code 一鍵加入**：
+  ```bash
+  claude mcp add --transport http tobid https://api.tobid.tw/mcp
+  ```
+- **雙工具協同場景**：
+  1. **集團穿透 × 標案版圖**：先由本專案解析集團旗艦母公司與所有轉投資子公司，再調用 ToBid `vendor_report` 匯出各子公司的政府得標總額與常客部會。
+  2. **合資企業 × 底價勝率**：分析同業合資實體時，利用 `compare_vendors` 與 `price_analysis` 深入同場對抗勝率與底價落點。
+  3. **法規風險 × 停權排查**：穿透複雜股權，同步利用 `vendor_compliance` 檢驗關係企業是否有政府採購法第 101 條拒絕往來／停權紀錄。
 
 ## WebMCP
 
