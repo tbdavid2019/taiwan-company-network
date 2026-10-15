@@ -1,6 +1,6 @@
 ---
 name: taiwan-company-network
-description: Queries the public read-only Taiwan Company Network API for company registration summaries, stock-code aliases, and direct relationship-index links. Use when an agent needs to find a Taiwan company by registered name or TWSE/TPEx stock code, inspect its basic data, enumerate upstream or downstream entities, or provide its interactive graph URL.
+description: Queries the public read-only Taiwan Company Network API for company registration summaries, stock-code aliases, and direct relationship-index links. Use when an agent needs to find a Taiwan company by registered name or TWSE/TPEx stock code, inspect its basic data, enumerate upstream or downstream entities, or provide its interactive graph URL and rendered relationship image.
 ---
 
 # Taiwan Company Network
@@ -23,6 +23,8 @@ No authentication is required. Do not attempt POST, PUT, PATCH, DELETE, MCP, or 
 6. For a prefix search, inspect keys in the same first-character shard and ask the user to disambiguate multiple matches.
 7. Use `relationships.upstream` and `relationships.downstream` only as direct relationship-index links.
 8. Cite `webUrl` when the interactive graph is useful.
+9. For an image request, GET the returned `imageUrl` and confirm success and SVG content. Provide it as a linked image or download link. `imageUrl` is `null` when there are no direct relationships. The SVG is a static overview with up to 12 links per direction and explicit omitted counts; use the JSON arrays for full results. Text is at least 16px (12pt) at native image size.
+10. Image URLs become available after the updated site build is deployed. A failed image GET must be reported as unavailable; do not claim an image was generated.
 
 ## Example
 

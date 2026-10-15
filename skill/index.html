@@ -6,11 +6,11 @@
   <title>Agent Skill - 888台灣的公司關係網</title>
   <meta name="description" content="給 LLM 使用的 Taiwan Company Network Skill 與公開 GET API 操作手冊。">
   <link rel="canonical" href="https://taiwan-company-network.david888.com/skill">
-  <style>body{margin:0;background:#f7f6f3;color:#171717;font:15px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace}.wrap{max-width:1000px;margin:auto;padding:32px 20px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}h1{font:700 26px/1.2 system-ui,sans-serif;margin:0}.actions{display:flex;gap:10px}a{color:#155eef}.button{border:1px solid #d6d3d1;border-radius:8px;background:white;padding:9px 13px;text-decoration:none;color:#171717}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#07111f;color:#e5edf8;border-radius:12px;padding:24px;overflow:auto;box-shadow:0 8px 24px #00000012}@media(max-width:640px){.top{align-items:flex-start;flex-direction:column}.wrap{padding:20px 12px}pre{padding:16px;font-size:12px}}</style>
+  <style>body{margin:0;background:#f7f6f3;color:#171717;font:16px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace}.wrap{max-width:1000px;margin:auto;padding:32px 20px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}h1{font:700 26px/1.2 system-ui,sans-serif;margin:0}.actions{display:flex;gap:10px}a{color:#155eef}.button{border:1px solid #d6d3d1;border-radius:8px;background:white;padding:9px 13px;text-decoration:none;color:#171717}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#07111f;color:#e5edf8;border-radius:12px;padding:24px;overflow:auto;box-shadow:0 8px 24px #00000012}@media(max-width:640px){.top{align-items:flex-start;flex-direction:column}.wrap{padding:20px 12px}pre{padding:16px;font-size:16px}}</style>
 </head>
 <body><main class="wrap"><div class="top"><div><h1>Taiwan Company Network Skill</h1><div>給其他 LLM 使用的公開 GET API 操作手冊</div></div><div class="actions"><a class="button" download="SKILL.md" href="https://taiwan-company-network.david888.com/skills/taiwan-company-network/SKILL.md">下載 SKILL.md</a><a class="button" href="https://taiwan-company-network.david888.com/">回網站</a></div></div><pre><code>---
 name: taiwan-company-network
-description: Queries the public read-only Taiwan Company Network API for company registration summaries, stock-code aliases, and direct relationship-index links. Use when an agent needs to find a Taiwan company by registered name or TWSE/TPEx stock code, inspect its basic data, enumerate upstream or downstream entities, or provide its interactive graph URL.
+description: Queries the public read-only Taiwan Company Network API for company registration summaries, stock-code aliases, and direct relationship-index links. Use when an agent needs to find a Taiwan company by registered name or TWSE/TPEx stock code, inspect its basic data, enumerate upstream or downstream entities, or provide its interactive graph URL and rendered relationship image.
 ---
 
 # Taiwan Company Network
@@ -33,6 +33,8 @@ No authentication is required. Do not attempt POST, PUT, PATCH, DELETE, MCP, or 
 6. For a prefix search, inspect keys in the same first-character shard and ask the user to disambiguate multiple matches.
 7. Use `relationships.upstream` and `relationships.downstream` only as direct relationship-index links.
 8. Cite `webUrl` when the interactive graph is useful.
+9. For an image request, GET the returned `imageUrl` and confirm success and SVG content. Provide it as a linked image or download link. `imageUrl` is `null` when there are no direct relationships. The SVG is a static overview with up to 12 links per direction and explicit omitted counts; use the JSON arrays for full results. Text is at least 16px (12pt) at native image size.
+10. Image URLs become available after the updated site build is deployed. A failed image GET must be reported as unavailable; do not claim an image was generated.
 
 ## Example
 
