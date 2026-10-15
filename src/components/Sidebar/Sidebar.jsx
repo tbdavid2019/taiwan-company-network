@@ -1,25 +1,16 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import {
-  Bot,
   Building2,
   Clock3,
-  ChevronRight,
   Network,
   X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { useCompany } from "context/CompanyContext";
 
-const routeIcons = {
-  Company: Building2,
-  Graph: Network,
-  Skill: Bot,
-};
-
-function Sidebar({ routes = [], isOpen, onClose }) {
+function Sidebar({ isOpen, onClose }) {
   const { recentCompanies } = useCompany();
 
   return (
@@ -59,46 +50,8 @@ function Sidebar({ routes = [], isOpen, onClose }) {
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-5">
-          <p className="px-3 pb-2 text-base font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Explore
-          </p>
-          <nav className="space-y-1">
-            {routes.filter((route) => route.name !== "Skill").map((route) => {
-              const Icon = routeIcons[route.name] || ChevronRight;
-              const label =
-                route.name === "Company"
-                  ? "Companies"
-                  : route.name === "Graph"
-                  ? "Network graph"
-                  : "Agent Skill & WebMCP";
-              return (
-                <NavLink
-                  className={({ isActive }) =>
-                    `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-base transition-colors ${
-                      isActive
-                        ? "bg-white/10 text-white shadow-sm"
-                        : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-100"
-                    }`
-                  }
-                  key={route.path}
-                  onClick={onClose}
-                  to={route.path}
-                >
-                  {({ isActive }) => (
-                    <>
-                      <Icon className={`size-4 ${isActive ? "text-blue-300" : "text-slate-500"}`} />
-                      <span className="flex-1">{label}</span>
-                      <ChevronRight className="size-3 opacity-0 transition-opacity group-hover:opacity-60" />
-                    </>
-                  )}
-                </NavLink>
-              );
-            })}
-          </nav>
-
           {recentCompanies.length > 0 && (
-            <div className="mt-8">
-              <Separator className="mb-5 bg-white/10" />
+            <div>
               <div className="mb-2 flex items-center gap-2 px-3 text-base font-semibold uppercase tracking-[0.18em] text-slate-500">
                 <Clock3 className="size-3" /> Recent
               </div>

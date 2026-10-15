@@ -12,7 +12,6 @@ function Admin() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Sidebar
-        routes={routes}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
