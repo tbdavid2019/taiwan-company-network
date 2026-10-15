@@ -1,0 +1,1 @@
+import{S as e,p as t,x as n}from"./index-DppkRLi0.js";var r=n(`arrow-up-right`,[[`path`,{d:`M7 7h10v10`,key:`1tivn9`}],[`path`,{d:`M7 17 17 7`,key:`1vkiza`}]]),i=e();function a({className:e,...n}){return(0,i.jsx)(`div`,{"data-slot":`skeleton`,className:t(`animate-pulse rounded-md bg-muted`,e),...n})}export{r as n,a as t};
