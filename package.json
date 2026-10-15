@@ -30,7 +30,7 @@
     "preview": "vite preview",
     "generate:aliases": "node scripts/build-company-aliases.mjs",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist --add --nojekyll --before-add scripts/stage-deploy-cleanly.cjs"
+    "deploy": "gh-pages -d dist --add --nojekyll --before-add ./scripts/stage-deploy-cleanly.cjs"
   },
   "browserslist": [
     ">0.2%",
