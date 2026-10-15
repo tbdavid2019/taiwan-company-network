@@ -156,7 +156,7 @@ function ExpansionEntityList({ icon: Icon, label, names, tone }) {
   );
 }
 
-function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zoom }) {
+function LocalRelationshipMap({ data, activeNode, hoveredNode, onNodeClick, onNodeHover, onZoomChange, zoom }) {
   const width = 1200;
   const height = 720;
   const center = { x: width / 2, y: height / 2 };
@@ -222,7 +222,8 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
 
   // Compensate for both the SVG viewBox and interactive zoom: text stays >= 16 CSS px.
   const viewportScale = Math.min(viewportSize.width / viewBox.width, viewportSize.height / viewBox.height);
-  const labelScale = Math.max(1, 1 / Math.max(0.01, viewportScale * zoom));
+  const labelScale = 1 / Math.max(0.01, viewportScale * zoom);
+  const showAllDetails = data.nodes.length <= 5;
 
   const viewportPosition = (event) => {
     const rect = svgRef.current?.getBoundingClientRect();
@@ -394,25 +395,27 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
         const upstreamCount = node.data?.upstreamCount || 0;
         const downstreamCount = node.data?.downstreamCount || 0;
         const nodeRadius = node.data?.radius || (isRoot ? 22 : 16);
+        const showDetails = showAllDetails || isRoot || node.id === activeNode || node.id === hoveredNode;
         const badgeY = position.y - nodeRadius - 28 * labelScale;
         return (
           <g
             className="cursor-grab active:cursor-grabbing"
+            aria-label={`${label} · 上游 ${upstreamCount} · 下游 ${downstreamCount}`}
             data-node-id={node.id}
             key={node.id}
             onMouseEnter={() => onNodeHover(node.id)}
             onMouseLeave={() => onNodeHover("")}
           >
             <circle cx={position.x} cy={position.y} fill={fill} r={nodeRadius} stroke="#fff" strokeWidth="3" />
-            <g transform={`translate(${position.x - 67 * labelScale} ${badgeY}) scale(${labelScale})`}>
+            {showDetails && <g transform={`translate(${position.x - 67 * labelScale} ${badgeY}) scale(${labelScale})`}>
               <rect fill="#eef2ff" height="24" rx="12" stroke="#c7d2fe" width="64" />
               <text fill="#4f46e5" fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize="16" fontWeight="600" textAnchor="middle" x="32" y="17">上 {upstreamCount}</text>
-            </g>
-            <g transform={`translate(${position.x + 3 * labelScale} ${badgeY}) scale(${labelScale})`}>
+            </g>}
+            {showDetails && <g transform={`translate(${position.x + 3 * labelScale} ${badgeY}) scale(${labelScale})`}>
               <rect fill="#e7f6f1" height="24" rx="12" stroke="#a7e3d3" width="64" />
               <text fill="#18765f" fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize="16" fontWeight="600" textAnchor="middle" x="32" y="17">下 {downstreamCount}</text>
-            </g>
-            <text fill={isRoot ? "#9a3412" : "#3f3933"} fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize={(isRoot ? 18 : 16) * labelScale} fontWeight={isRoot ? 600 : 500} textAnchor="middle" x={position.x} y={position.y + nodeRadius + (isRoot ? 28 : 24) * labelScale}>{labelLines.map((line, index) => <tspan dy={index === 0 ? 0 : 22 * labelScale} key={index} x={position.x}>{line}</tspan>)}</text>
+            </g>}
+            {showDetails && <text fill={isRoot ? "#9a3412" : "#3f3933"} fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize={(isRoot ? 18 : 16) * labelScale} fontWeight={isRoot ? 600 : 500} textAnchor="middle" x={position.x} y={position.y + nodeRadius + (isRoot ? 28 : 24) * labelScale}>{labelLines.map((line, index) => <tspan dy={index === 0 ? 0 : 22 * labelScale} key={index} x={position.x}>{line}</tspan>)}</text>}
           </g>
         );
       })}
@@ -732,7 +735,9 @@ function NetworkGraph() {
             {useLocalRelationshipMap && graphData.edges.length > 0 && (
               <div className="absolute inset-0 z-[1] p-3 sm:p-8">
                 <LocalRelationshipMap
+                  activeNode={activeNode}
                   data={graphData}
+                  hoveredNode={hoveredNode}
                   key={`${company}-${mode}-${localMapResetKey}`}
                   onNodeClick={selectExpansionNode}
                   onNodeHover={setHoveredNode}
@@ -751,8 +756,8 @@ function NetworkGraph() {
               </div>
             )}
             {hoveredNode && <div className="pointer-events-none absolute right-4 top-4 z-10 w-[min(22rem,calc(100%-2rem))] rounded-xl border border-border/80 bg-background/95 p-4 shadow-xl backdrop-blur" data-share-exclude="true"><EntityDetails details={details} name={hoveredNode} /></div>}
-            {useLocalRelationshipMap && graphData.edges.length > 0 && <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-md border border-border/70 bg-background/90 px-2 py-1 text-base text-muted-foreground shadow-sm backdrop-blur sm:hidden" data-share-exclude="true">拖曳查看完整關係 · 雙指縮放</div>}
-            <div className="absolute bottom-4 left-4 z-10 hidden items-center gap-2 rounded-lg border border-border/70 bg-[#fffdf9]/95 px-3 py-2 text-base text-muted-foreground shadow-sm backdrop-blur sm:flex"><span className="size-2 rounded-full bg-[#d97757]" /> Focus <span className="size-2 rounded-full bg-[#2f7d6d]" /> Company <span className="size-2 rounded-full bg-[#877666]" /> Entity <span>· 拖曳空白處移動畫布、雙指縮放</span> {expandedNodes.size > 0 && <span>· {expandedNodes.size} expanded</span>}</div>
+            {useLocalRelationshipMap && graphData.edges.length > 0 && <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-md border border-border/70 bg-background/90 px-2 py-1 text-base text-muted-foreground shadow-sm backdrop-blur sm:hidden" data-share-exclude="true">密集圖點選看名稱 · 拖曳查看周邊、雙指縮放</div>}
+            <div className="absolute bottom-4 left-4 z-10 hidden items-center gap-2 rounded-lg border border-border/70 bg-[#fffdf9]/95 px-3 py-2 text-base text-muted-foreground shadow-sm backdrop-blur sm:flex"><span className="size-2 rounded-full bg-[#d97757]" /> Focus <span className="size-2 rounded-full bg-[#2f7d6d]" /> Company <span className="size-2 rounded-full bg-[#877666]" /> Entity <span>· 拖曳移動畫布、雙指縮放 · 密集圖懸停或點選看名稱；拖曳查看周邊</span> {expandedNodes.size > 0 && <span>· {expandedNodes.size} expanded</span>}</div>
             <div className="absolute bottom-4 right-4 z-10 flex gap-1 rounded-lg border border-border/70 bg-background/90 p-1 shadow-sm backdrop-blur" data-share-exclude="true"><Button aria-label="Zoom out" onClick={() => zoom(0.8)} size="icon" variant="ghost"><Minus /></Button><Button aria-label="Reset graph expansion" onClick={resetGraph} size="icon" variant="ghost"><RefreshCw /></Button><Button aria-label="Zoom in" onClick={() => zoom(1.2)} size="icon" variant="ghost"><Plus /></Button></div>
           </div></CardContent>
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 bg-[#fffdf9] px-5 py-3 text-base text-muted-foreground"><span>資料為公司／法人關係索引，不代表已驗證持股、控制或投資關係。</span><span>taiwan-company-network.david888.com</span></div>
