@@ -17,10 +17,10 @@ function Admin() {
         onClose={() => setSidebarOpen(false)}
       />
 
-      <div className="min-h-screen lg:pl-[17rem]">
+      <div className="app-main min-h-screen lg:pl-[17rem]">
         <AdminNavbar onMenuClick={() => setSidebarOpen(true)} />
 
-        <main className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
+        <main className="app-content mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
           <Suspense fallback={<div className="flex min-h-[50vh] items-center justify-center text-base text-muted-foreground">Loading view…</div>}>
             <Routes>
               {routes.map((route) => (

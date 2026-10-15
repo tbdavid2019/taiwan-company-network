@@ -154,3 +154,51 @@
     font: inherit;
     }
 }
+
+/* Keep the complete vector graph on paper, including its existing watermark.
+   Print always uses the fitted view, independent of screen pan and zoom. */
+@media print {
+  @page { size: A4 landscape; margin: 8mm; }
+  body:has(.company-network-page) {
+    background: white;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  body:has(.company-network-page) > :not(#root),
+  body:has(.company-network-page) .app-sidebar,
+  body:has(.company-network-page) .app-navigation-backdrop,
+  body:has(.company-network-page) .app-navbar,
+  body:has(.company-network-page) .app-footer,
+  .company-network-page .relationship-heading,
+  .company-network-page .relationship-details,
+  .company-network-page [data-share-exclude="true"],
+  .company-network-page .graph-legend {
+    display: none !important;
+  }
+  body:has(.company-network-page) .app-main,
+  body:has(.company-network-page) .app-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    min-height: 0 !important;
+  }
+  .company-network-page .relationship-grid { display: block; }
+  .company-network-page .relationship-card {
+    padding: 0;
+    gap: 0;
+    width: 100%;
+    box-shadow: none;
+    break-inside: avoid;
+  }
+  .company-network-page .relationship-canvas {
+    height: 152mm !important;
+    width: 100% !important;
+  }
+  .company-network-page .local-map-shell { padding: 0 !important; }
+  .company-network-page .relationship-transform { transform: none !important; }
+  .company-network-page .relationship-svg { cursor: default; }
+}
+
+.graph-node:focus { outline: none; }
+.graph-node:focus-visible > circle,
+.graph-node:hover > circle { stroke: #1e293b; stroke-width: 3px; }

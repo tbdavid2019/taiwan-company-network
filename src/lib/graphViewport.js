@@ -5,7 +5,7 @@ export function companyPageTitle(company) {
 }
 
 export function clampZoom(zoom) {
-  return Math.min(2.4, Math.max(0.65, zoom));
+  return Math.min(8, Math.max(0.65, zoom));
 }
 
 export function calculatePinchViewport({

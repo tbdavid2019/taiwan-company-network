@@ -5,16 +5,11 @@ import {
   Building2,
   Clock3,
   ChevronRight,
-  Landmark,
-  MapPin,
   Network,
-  UserRound,
   X,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useCompany } from "context/CompanyContext";
 
@@ -24,26 +19,21 @@ const routeIcons = {
   Skill: Bot,
 };
 
-function formatCapital(value) {
-  if (value === undefined || value === null || value === "") return "—";
-  return new Intl.NumberFormat("zh-TW").format(Number(value));
-}
-
 function Sidebar({ routes = [], isOpen, onClose }) {
-  const { companyDetails, recentCompanies, selectedCompany } = useCompany();
+  const { recentCompanies } = useCompany();
 
   return (
     <>
       {isOpen && (
         <button
           aria-label="Close navigation"
-          className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm lg:hidden"
+          className="app-navigation-backdrop fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm lg:hidden"
           onClick={onClose}
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[17rem] flex-col border-r border-slate-800 bg-slate-950 text-slate-100 transition-transform duration-200 lg:z-20 lg:translate-x-0 ${
+        className={`app-sidebar fixed inset-y-0 left-0 z-50 flex w-[17rem] flex-col border-r border-slate-800 bg-slate-950 text-slate-100 transition-transform duration-200 lg:z-20 lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -73,7 +63,7 @@ function Sidebar({ routes = [], isOpen, onClose }) {
             Explore
           </p>
           <nav className="space-y-1">
-            {routes.map((route) => {
+            {routes.filter((route) => route.name !== "Skill").map((route) => {
               const Icon = routeIcons[route.name] || ChevronRight;
               const label =
                 route.name === "Company"
@@ -105,42 +95,6 @@ function Sidebar({ routes = [], isOpen, onClose }) {
               );
             })}
           </nav>
-
-          {companyDetails && (
-            <div className="mt-8">
-              <Separator className="mb-5 bg-white/10" />
-              <p className="px-3 pb-2 text-base font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Selected entity
-              </p>
-              <Card className="border-white/10 bg-white/[0.06] text-slate-100 ring-0">
-                <CardHeader className="gap-2 px-4 pb-3 pt-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="line-clamp-2 text-base text-white">
-                      {selectedCompany || "Company"}
-                    </CardTitle>
-                    <Badge className="shrink-0 border-blue-400/20 bg-blue-400/10 text-blue-200" variant="outline">
-                      Entity
-                    </Badge>
-                  </div>
-                  <p className="font-mono text-base text-slate-500">ID {companyDetails.id || "—"}</p>
-                </CardHeader>
-                <CardContent className="space-y-3 px-4 pb-4 text-base">
-                  <div className="flex gap-2 text-slate-300">
-                    <Landmark className="mt-0.5 size-3.5 shrink-0 text-slate-500" />
-                    <span>Capital {formatCapital(companyDetails.資本總額)}</span>
-                  </div>
-                  <div className="flex gap-2 text-slate-300">
-                    <UserRound className="mt-0.5 size-3.5 shrink-0 text-slate-500" />
-                    <span className="line-clamp-2">{companyDetails.代表人姓名 || "Representative unavailable"}</span>
-                  </div>
-                  <div className="flex gap-2 text-slate-300">
-                    <MapPin className="mt-0.5 size-3.5 shrink-0 text-slate-500" />
-                    <span className="line-clamp-3">{companyDetails.公司所在地 || "Address unavailable"}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
 
           {recentCompanies.length > 0 && (
             <div className="mt-8">

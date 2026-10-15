@@ -20,7 +20,8 @@ test("companyPageTitle falls back to the site title", () => {
 
 test("clampZoom keeps touch and button zoom within the supported range", () => {
   assert.equal(clampZoom(0.2), 0.65);
-  assert.equal(clampZoom(4), 2.4);
+  assert.equal(clampZoom(4), 4);
+  assert.equal(clampZoom(20), 8);
   assert.equal(clampZoom(1.5), 1.5);
 });
 

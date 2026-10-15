@@ -1,5 +1,5 @@
+import { flushSync } from "react-dom";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Graph } from "@antv/g6";
 import { toBlob } from "html-to-image";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -13,6 +13,7 @@ import {
   Minus,
   Network,
   Plus,
+  Printer,
   RefreshCw,
   Share2,
   UserRound,
@@ -27,6 +28,7 @@ import { Separator } from "@/components/ui/separator";
 import { buildGraphShareUrl, uploadGraphToBox } from "@/lib/boxShare";
 import { loadCompanyDetails, loadGraph } from "@/lib/companyData";
 import { nodeSelectedOnPointerEnd, pointerMovementExceedsThreshold } from "@/lib/graphInteraction";
+import { layoutReadableGraph } from "@/lib/graphReadableLayout";
 import { calculateNodeRadii } from "@/lib/graphNodeSizing";
 import { graphShareFileName, graphShareText } from "@/lib/graphShare";
 import { calculatePinchViewport, clampZoom, companyPageTitle } from "@/lib/graphViewport";
@@ -156,20 +158,31 @@ function ExpansionEntityList({ icon: Icon, label, names, tone }) {
   );
 }
 
-function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zoom }) {
+function LocalRelationshipMap({ data, onNodeClick, onZoomChange, zoom }) {
   const width = 1200;
   const height = 720;
   const center = { x: width / 2, y: height / 2 };
   const root = data.nodes.find((node) => node.data?.isRoot) || data.nodes[0];
-  const otherNodes = data.nodes.filter((node) => node.id !== root?.id);
   const nodesById = new Map(data.nodes.map((node) => [node.id, node]));
   const svgRef = useRef(null);
-  const [viewportSize, setViewportSize] = useState({ width: 1200, height: 720 });
+  const [viewportAspect, setViewportAspect] = useState(2);
+  const [printing, setPrinting] = useState(false);
+  useEffect(() => {
+    const beforePrint = () => flushSync(() => setPrinting(true));
+    const afterPrint = () => setPrinting(false);
+    window.addEventListener("beforeprint", beforePrint);
+    window.addEventListener("afterprint", afterPrint);
+    return () => {
+      window.removeEventListener("beforeprint", beforePrint);
+      window.removeEventListener("afterprint", afterPrint);
+    };
+  }, []);
   useEffect(() => {
     const svg = svgRef.current;
     if (!svg) return undefined;
     const observer = new ResizeObserver(([entry]) => {
-      setViewportSize({ width: entry.contentRect.width, height: entry.contentRect.height });
+      const { width, height } = entry.contentRect;
+      if (width && height && !window.matchMedia("print").matches) setViewportAspect(width / height);
     });
     observer.observe(svg);
     return () => observer.disconnect();
@@ -181,24 +194,8 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const panRef = useRef(pan);
   const zoomRef = useRef(zoom);
-  const defaultPositions = new Map([[root?.id, center]]);
-
-  const ringCapacities = [10, 20, 32, 48];
-  let ring = 0;
-  let ringOffset = 0;
-  otherNodes.forEach((node, index) => {
-    while (index >= ringOffset + ringCapacities[ring]) {
-      ringOffset += ringCapacities[ring];
-      ring += 1;
-    }
-    const ringCount = Math.min(ringCapacities[ring], otherNodes.length - ringOffset);
-    const angle = (-Math.PI / 2) + ((index - ringOffset) * (2 * Math.PI)) / ringCount;
-    const radius = 175 + ring * 115;
-    defaultPositions.set(node.id, {
-      x: center.x + Math.cos(angle) * radius,
-      y: center.y + Math.sin(angle) * Math.min(radius * 0.68, 270),
-    });
-  });
+  const readableLayout = useMemo(() => layoutReadableGraph(data.nodes, center, printing ? 281 / 152 : viewportAspect), [data.nodes, viewportAspect, printing]);
+  const defaultPositions = readableLayout.positions;
 
   useEffect(() => {
     setDraggedPositions({});
@@ -208,29 +205,14 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
   useEffect(() => { zoomRef.current = zoom; }, [zoom]);
 
   const positions = new Map(defaultPositions);
-  Object.entries(draggedPositions).forEach(([id, position]) => {
+  Object.entries(printing ? {} : draggedPositions).forEach(([id, position]) => {
     if (positions.has(id)) positions.set(id, position);
   });
-  const defaultPoints = [...defaultPositions.values()];
-  const minX = Math.min(...defaultPoints.map((point) => point.x)) - 100;
-  const maxX = Math.max(...defaultPoints.map((point) => point.x)) + 100;
-  const minY = Math.min(...defaultPoints.map((point) => point.y)) - 100;
-  const maxY = Math.max(...defaultPoints.map((point) => point.y)) + 100;
-  const viewBox = viewportSize.width < 600
-    ? { x: center.x - viewportSize.width / 2, y: center.y - viewportSize.height / 2, width: Math.max(1, viewportSize.width), height: Math.max(1, viewportSize.height) }
-    : { x: minX, y: minY, width: Math.max(260, maxX - minX), height: Math.max(220, maxY - minY) };
-
-  // Compensate for both the SVG viewBox and interactive zoom: text stays >= 16 CSS px.
-  const viewportScale = Math.min(viewportSize.width / viewBox.width, viewportSize.height / viewBox.height);
-  const labelScale = Math.max(1, 1 / Math.max(0.01, viewportScale * zoom));
-
+  const viewBox = readableLayout.viewBox;
   const viewportPosition = (event) => {
-    const rect = svgRef.current?.getBoundingClientRect();
-    if (!rect) return null;
-    return {
-      x: viewBox.x + ((event.clientX - rect.left) / rect.width) * viewBox.width,
-      y: viewBox.y + ((event.clientY - rect.top) / rect.height) * viewBox.height,
-    };
+    const matrix = svgRef.current?.getScreenCTM();
+    if (!matrix) return null;
+    return new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
   };
   const graphPosition = (point) => ({
     x: center.x + (point.x - center.x - panRef.current.x) / zoomRef.current,
@@ -341,7 +323,7 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
   };
 
   return (
-    <svg aria-label="Company relationship graph" className="h-full w-full cursor-grab active:cursor-grabbing" onPointerCancel={endPointer} onPointerDown={startPointer} onPointerMove={movePointer} onPointerUp={endPointer} ref={svgRef} role="img" style={{ touchAction: "none" }} viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}>
+    <svg aria-label="Company relationship graph" className="relationship-svg h-full w-full cursor-grab active:cursor-grabbing" onPointerCancel={endPointer} onPointerDown={startPointer} onPointerMove={movePointer} onPointerUp={endPointer} ref={svgRef} role="img" style={{ touchAction: "none" }} viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}>
       <defs>
         <marker id="relationship-arrow" markerHeight="10" markerUnits="userSpaceOnUse" markerWidth="10" orient="auto" refX="9" refY="5">
           <path d="M0,0 L10,5 L0,10 Z" fill="#786f66" />
@@ -351,7 +333,7 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
         </pattern>
       </defs>
       <rect aria-hidden="true" fill="url(#david888-watermark)" height={viewBox.height} width={viewBox.width} x={viewBox.x} y={viewBox.y} />
-      <g transform={`translate(${pan.x} ${pan.y}) translate(${center.x} ${center.y}) scale(${zoom}) translate(${-center.x} ${-center.y})`}>
+      <g className="relationship-transform" transform={`translate(${pan.x} ${pan.y}) translate(${center.x} ${center.y}) scale(${zoom}) translate(${-center.x} ${-center.y})`}>
       {data.nodes.map((node) => {
         if (!node.data?.isRoot) return null;
         const position = positions.get(node.id);
@@ -386,33 +368,37 @@ function LocalRelationshipMap({ data, onNodeClick, onNodeHover, onZoomChange, zo
         const isCompany = node.data?.kind === "company";
         const fill = isRoot ? "#d97757" : isCompany ? "#2f7d6d" : "#877666";
         const label = String(node.data?.name || node.id);
-        const labelLines = Array.from(label).reduce((lines, char, index) => {
-          if (index % 10 === 0) lines.push("");
-          lines[lines.length - 1] += char;
-          return lines;
-        }, []);
+        const geometry = readableLayout.geometries.get(node.id);
+        const { radius: nodeRadius, fontSize, lineHeight, lines: labelLines, upstreamWidth, downstreamWidth } = geometry;
         const upstreamCount = node.data?.upstreamCount || 0;
         const downstreamCount = node.data?.downstreamCount || 0;
-        const nodeRadius = node.data?.radius || (isRoot ? 22 : 16);
-        const badgeY = position.y - nodeRadius - 28 * labelScale;
+        const badgeY = position.y - nodeRadius - 23;
+        const badgeLeft = position.x - (upstreamWidth + downstreamWidth + 5) / 2;
         return (
           <g
-            className="cursor-grab active:cursor-grabbing"
+            className="graph-node cursor-grab active:cursor-grabbing"
+            aria-label={label}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onNodeClick(node.id);
+              }
+            }}
             data-node-id={node.id}
             key={node.id}
-            onMouseEnter={() => onNodeHover(node.id)}
-            onMouseLeave={() => onNodeHover("")}
           >
             <circle cx={position.x} cy={position.y} fill={fill} r={nodeRadius} stroke="#fff" strokeWidth="3" />
-            <g transform={`translate(${position.x - 67 * labelScale} ${badgeY}) scale(${labelScale})`}>
-              <rect fill="#eef2ff" height="24" rx="12" stroke="#c7d2fe" width="64" />
-              <text fill="#4f46e5" fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize="16" fontWeight="600" textAnchor="middle" x="32" y="17">上 {upstreamCount}</text>
+            <g transform={`translate(${badgeLeft} ${badgeY})`}>
+              <rect fill="#eef2ff" height="18" rx="9" stroke="#c7d2fe" width={upstreamWidth} />
+              <text fill="#4f46e5" fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize="11" fontWeight="500" textAnchor="middle" x={upstreamWidth / 2} y="13">上 {upstreamCount}</text>
             </g>
-            <g transform={`translate(${position.x + 3 * labelScale} ${badgeY}) scale(${labelScale})`}>
-              <rect fill="#e7f6f1" height="24" rx="12" stroke="#a7e3d3" width="64" />
-              <text fill="#18765f" fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize="16" fontWeight="600" textAnchor="middle" x="32" y="17">下 {downstreamCount}</text>
+            <g transform={`translate(${badgeLeft + upstreamWidth + 5} ${badgeY})`}>
+              <rect fill="#e7f6f1" height="18" rx="9" stroke="#a7e3d3" width={downstreamWidth} />
+              <text fill="#18765f" fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize="11" fontWeight="500" textAnchor="middle" x={downstreamWidth / 2} y="13">下 {downstreamCount}</text>
             </g>
-            <text fill={isRoot ? "#9a3412" : "#3f3933"} fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize={(isRoot ? 18 : 16) * labelScale} fontWeight={isRoot ? 600 : 500} textAnchor="middle" x={position.x} y={position.y + nodeRadius + (isRoot ? 28 : 24) * labelScale}>{labelLines.map((line, index) => <tspan dy={index === 0 ? 0 : 22 * labelScale} key={index} x={position.x}>{line}</tspan>)}</text>
+            <text fill={isRoot ? "#9a3412" : "#3f3933"} fontFamily="JetBrains Mono, Gen Jyuu Gothic, sans-serif" fontSize={fontSize} paintOrder="stroke" stroke="#faf8f5" strokeWidth="3" strokeLinejoin="round" fontWeight={isRoot ? 600 : 500} textAnchor="middle" x={position.x} y={position.y + nodeRadius + 12 + fontSize}>{labelLines.map((line, index) => <tspan dy={index === 0 ? 0 : lineHeight} key={index} x={position.x}>{line}</tspan>)}</text>
           </g>
         );
       })}
@@ -426,16 +412,13 @@ function NetworkGraph() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { rememberCompany, setCompanyDetails, setSelectedCompany } = useCompany();
-  const graphContainerRef = useRef(null);
   const graphShareRef = useRef(null);
   const preparedShareRef = useRef(null);
-  const graphRef = useRef(null);
   const [network, setNetwork] = useState({});
   const [details, setDetails] = useState({});
   const [company, setCompany] = useState("");
   const [mode, setMode] = useState("both");
   const [expandedNodes, setExpandedNodes] = useState(() => new Set());
-  const [hoveredNode, setHoveredNode] = useState("");
   const [activeNode, setActiveNode] = useState("");
   const [localZoom, setLocalZoom] = useState(1);
   const [localMapResetKey, setLocalMapResetKey] = useState(0);
@@ -502,7 +485,6 @@ function NetworkGraph() {
   }, [graphData]);
 
   const currentView = VIEW_OPTIONS.find((option) => option.id === mode);
-  const useLocalRelationshipMap = graphData.nodes.length <= 80;
   const toggleExpandedNode = useCallback((id) => {
     setExpandedNodes((current) => {
       const next = new Set(current);
@@ -524,96 +506,11 @@ function NetworkGraph() {
     };
   }, [activeNode, mode, network]);
 
-  useEffect(() => {
-    const container = graphContainerRef.current;
-    if (!container || graphRef.current) return undefined;
-
-    const instance = new Graph({
-      container,
-      autoResize: true,
-      autoFit: { type: "view", when: "always" },
-      padding: 72,
-      zoomRange: [0.5, 3],
-      animation: false,
-      // G6 keeps label shapes at their screen size across zoom levels.
-      // https://g6.antv.antgroup.com/en/manual/behavior/fix-element-size
-      behaviors: ["drag-canvas", "zoom-canvas", "drag-element-force", {
-        type: "fix-element-size", enable: true, state: "", node: { shape: "label" }, edgeFilter: () => false,
-      }],
-      layout: {
-        type: "d3-force",
-        link: { distance: 150 },
-        manyBody: { strength: -520 },
-        collide: { radius: 44 },
-        alphaDecay: 0.08,
-      },
-      node: {
-        style: (datum) => {
-          const data = datum.data || {};
-          const isRoot = data.isRoot;
-          const isCompany = data.kind === "company";
-          return {
-            size: (data.radius || (isRoot ? 22 : 16)) * 2,
-            fill: isRoot ? "#d97757" : isCompany ? "#2f7d6d" : "#877666",
-            stroke: isRoot ? "#f3d3c7" : "#faf8f5",
-            lineWidth: isRoot ? 8 : 3,
-            label: true,
-            labelText: `${String(data.name || datum.id)}\n上 ${data.upstreamCount || 0} · 下 ${data.downstreamCount || 0}`,
-            labelFill: isRoot ? "#9a3412" : "#3f3933",
-            labelFontSize: isRoot ? 18 : 16,
-            labelFontWeight: isRoot ? 600 : 400,
-            labelPlacement: "bottom",
-            labelOffsetY: 8,
-            labelMaxWidth: 320,
-            labelWordWrap: true,
-          };
-        },
-      },
-      edge: { style: { stroke: "#b7aba0", lineWidth: 1.4, endArrow: true, endArrowSize: 5 } },
-    });
-
-    instance.on("node:click", (event) => {
-      const id = event.target?.id;
-      if (id) selectExpansionNode(id);
-    });
-    instance.on("node:pointerenter", (event) => setHoveredNode(event.target?.id || ""));
-    instance.on("node:pointerleave", () => setHoveredNode(""));
-    graphRef.current = instance;
-    return () => {
-      instance.destroy();
-      graphRef.current = null;
-    };
-  }, [selectExpansionNode]);
-
-  useEffect(() => {
-    const instance = graphRef.current;
-    if (!instance || !graphData.nodes.length) return;
-    instance.setLayout(graphData.nodes.length === 1 ? { type: "grid", rows: 1, cols: 1 } : {
-      type: "d3-force",
-      link: { distance: 150 },
-      manyBody: { strength: -520 },
-      collide: { radius: 44 },
-      alphaDecay: 0.08,
-    });
-    instance.setData(graphData);
-    instance.render()
-      .then(() => instance.fitView({ padding: 72 }, { duration: 180 }))
-      .catch((renderError) => setError(renderError.message || "Unable to render the network graph."));
-  }, [graphData]);
-
-  const zoom = (factor) => {
-    if (useLocalRelationshipMap) {
-      setLocalZoom((current) => clampZoom(current * factor));
-      return;
-    }
-    graphRef.current?.zoomBy(factor, { duration: 180 });
-  };
+  const zoom = (factor) => setLocalZoom((current) => clampZoom(current * factor));
   const resetGraph = () => {
-    setHoveredNode("");
     setExpandedNodes(new Set());
     setLocalZoom(1);
     setLocalMapResetKey((current) => current + 1);
-    requestAnimationFrame(() => graphRef.current?.fitView({ padding: 72 }, { duration: 220 }));
   };
 
   const shareGraph = async () => {
@@ -622,7 +519,6 @@ function NetworkGraph() {
 
     if (!graphShareRef.current) return;
     setIsSharing(true);
-    setHoveredNode("");
 
     try {
       await document.fonts?.ready;
@@ -681,11 +577,11 @@ function NetworkGraph() {
   if (error) return <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-6 text-base text-destructive">{error}</div>;
 
   return (
-    <div className="fade-in">
-      <Header actions={<div className="flex flex-wrap gap-2"><Button onClick={() => navigate("/index")} variant="outline"><ArrowLeft />Back to index</Button><Button disabled={isSharing} onClick={shareGraph}><Share2 />{isSharing ? "產生中…" : "分享"}</Button></div>} title={company || "Relationship graph"} />
+    <div className="company-network-page fade-in">
+      <div className="relationship-heading"><Header actions={<div className="flex flex-wrap gap-2"><Button onClick={() => navigate("/index")} variant="outline"><ArrowLeft />Back to index</Button><Button disabled={isSharing} onClick={shareGraph}><Share2 />{isSharing ? "產生中…" : "分享"}</Button><Button onClick={() => window.print()} variant="outline"><Printer />列印</Button></div>} title={company || "Relationship graph"} /></div>
       {shareMessage && <p aria-live="polite" className="mb-3 text-right text-base text-muted-foreground">{shareMessage}</p>}
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
-        <Card className="min-w-0 overflow-hidden" ref={graphShareRef}>
+      <div className={`relationship-grid grid gap-5 ${activeNode ? "xl:grid-cols-[minmax(0,1fr)_20rem]" : ""}`}>
+        <Card className="relationship-card min-w-0 overflow-hidden" ref={graphShareRef}>
           <CardHeader className="border-b border-border/70 bg-muted/20 px-5 py-4 sm:px-6">
             <form
               className="mb-4 flex flex-wrap gap-2"
@@ -728,14 +624,13 @@ function NetworkGraph() {
               </Badge>
             </div>
           </CardHeader>
-          <CardContent className="p-0"><div className="relative h-[560px] w-full overflow-hidden bg-[#faf8f5] md:h-[640px]" ref={graphContainerRef}>
-            {useLocalRelationshipMap && graphData.edges.length > 0 && (
-              <div className="absolute inset-0 z-[1] p-3 sm:p-8">
+          <CardContent className="p-0"><div className="relationship-canvas relative h-[560px] w-full overflow-hidden bg-[#faf8f5] md:h-[640px]">
+            {graphData.edges.length > 0 && (
+              <div className="local-map-shell absolute inset-0 z-[1] p-3 sm:p-5">
                 <LocalRelationshipMap
                   data={graphData}
                   key={`${company}-${mode}-${localMapResetKey}`}
                   onNodeClick={selectExpansionNode}
-                  onNodeHover={setHoveredNode}
                   onZoomChange={setLocalZoom}
                   zoom={localZoom}
                 />
@@ -750,14 +645,16 @@ function NetworkGraph() {
                 </div>
               </div>
             )}
-            {hoveredNode && <div className="pointer-events-none absolute right-4 top-4 z-10 w-[min(22rem,calc(100%-2rem))] rounded-xl border border-border/80 bg-background/95 p-4 shadow-xl backdrop-blur" data-share-exclude="true"><EntityDetails details={details} name={hoveredNode} /></div>}
-            {useLocalRelationshipMap && graphData.edges.length > 0 && <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-md border border-border/70 bg-background/90 px-2 py-1 text-base text-muted-foreground shadow-sm backdrop-blur sm:hidden" data-share-exclude="true">拖曳查看完整關係 · 雙指縮放</div>}
-            <div className="absolute bottom-4 left-4 z-10 hidden items-center gap-2 rounded-lg border border-border/70 bg-[#fffdf9]/95 px-3 py-2 text-base text-muted-foreground shadow-sm backdrop-blur sm:flex"><span className="size-2 rounded-full bg-[#d97757]" /> Focus <span className="size-2 rounded-full bg-[#2f7d6d]" /> Company <span className="size-2 rounded-full bg-[#877666]" /> Entity <span>· 拖曳空白處移動畫布、雙指縮放</span> {expandedNodes.size > 0 && <span>· {expandedNodes.size} expanded</span>}</div>
-            <div className="absolute bottom-4 right-4 z-10 flex gap-1 rounded-lg border border-border/70 bg-background/90 p-1 shadow-sm backdrop-blur" data-share-exclude="true"><Button aria-label="Zoom out" onClick={() => zoom(0.8)} size="icon" variant="ghost"><Minus /></Button><Button aria-label="Reset graph expansion" onClick={resetGraph} size="icon" variant="ghost"><RefreshCw /></Button><Button aria-label="Zoom in" onClick={() => zoom(1.2)} size="icon" variant="ghost"><Plus /></Button></div>
-          </div></CardContent>
+
+          </div>
+            <div className="relationship-toolbar flex flex-wrap items-center justify-between gap-3 border-t border-border/70 bg-[#fffdf9] px-4 py-2" data-share-exclude="true">
+              <div className="flex flex-wrap items-center gap-2 text-base text-muted-foreground"><span className="size-2 rounded-full bg-[#d97757]" /> Focus <span className="size-2 rounded-full bg-[#2f7d6d]" /> Company <span className="size-2 rounded-full bg-[#877666]" /> Entity <span>· 拖曳移動、雙指縮放</span></div>
+              <div className="flex gap-1"><Button aria-label="Zoom out" onClick={() => zoom(0.8)} size="icon" variant="ghost"><Minus /></Button><Button aria-label="Reset graph expansion" onClick={resetGraph} size="icon" variant="ghost"><RefreshCw /></Button><Button aria-label="Zoom in" onClick={() => zoom(1.2)} size="icon" variant="ghost"><Plus /></Button></div>
+            </div>
+          </CardContent>
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 bg-[#fffdf9] px-5 py-3 text-base text-muted-foreground"><span>資料為公司／法人關係索引，不代表已驗證持股、控制或投資關係。</span><span>taiwan-company-network.david888.com</span></div>
         </Card>
-        <aside className="space-y-5">
+        <aside className="relationship-details space-y-5">
           {activeNode && activeNodeConnections && <Card><CardHeader className="px-5 pb-3 pt-5"><CardTitle className="text-base">Expanded entity</CardTitle><p className="text-base leading-6 text-muted-foreground">Entities opened from the node you last clicked.</p></CardHeader><CardContent className="space-y-4 px-5 pb-5"><EntityDetails details={details} name={activeNode} /><Separator /><ExpansionEntityList icon={ArrowDownLeft} label="Upstream entities" names={activeNodeConnections.incoming} tone="text-blue-600" /><ExpansionEntityList icon={ArrowUpRight} label="Downstream entities" names={activeNodeConnections.outgoing} tone="text-teal-700" /></CardContent></Card>}
         </aside>
       </div>

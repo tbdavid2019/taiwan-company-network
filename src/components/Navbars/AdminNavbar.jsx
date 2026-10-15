@@ -51,7 +51,7 @@ function AdminNavbar({ onMenuClick }) {
   const isGraph = location.pathname.includes("/graph");
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur-xl">
+    <header className="app-navbar sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur-xl">
       <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
         <Button aria-label="Open navigation" className="lg:hidden" onClick={onMenuClick} size="icon" variant="outline"><Menu /></Button>
         <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-2 text-base sm:flex">

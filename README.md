@@ -38,7 +38,7 @@ npm run build
 - 中文：Gen Jyuu Gothic Medium
 - 英文、數字與程式碼：JetBrains Mono Medium
 
-字體檔位於 `src/assets/fonts/custom/`，全域 CSS 會依字元自動套用對應字體。介面中文、圖上標籤與註記以至少 16px（12pt）顯示；互動圖在縮小時維持文字大小，手機可拖曳查看完整關係。
+字體檔位於 `src/assets/fonts/custom/`，全域 CSS 會依字元自動套用對應字體。介面中文以至少 16px（12pt）顯示；關係圖依完整名稱、數量與節點尺寸安排空間，所有標籤直接顯示並隨整張圖縮放。手機可拖曳與縮放；「列印」提供 A4 橫式完整向量圖，保留浮水印，並自動還原完整排版。
 
 ## Agent Skill
 
